@@ -79,3 +79,5 @@ $lastResponse = RequestResponseStack::getLastResponse(); // get last response
 // ...
 
 ```
+
+## Profit
