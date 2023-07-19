@@ -19,7 +19,8 @@
         "symfony/http-client": "6.*",
         "ufo-tech/rpc-objects": "*",
         "ufo-tech/rpc-exceptions": "*",
-        "ext-readline": "*"
+        "ext-readline": "*",
+        "ufo-cms/colored_cli": "^1.0"
     },
     "autoload" : {
         "psr-4" : {

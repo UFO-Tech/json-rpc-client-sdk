@@ -5,10 +5,10 @@ Simple clientSDK builder for any json-RPC servers
 ![License](https://img.shields.io/badge/license-MIT-green?labelColor=7b8185) ![Size](https://img.shields.io/github/repo-size/ufo-tech/json-rpc-client-sdk?label=Size%20of%20the%20repository) ![package_version](https://img.shields.io/github/v/tag/ufo-tech/json-rpc-client_sdk?color=blue&label=Latest%20Version&logo=Packagist&logoColor=white&labelColor=7b8185) ![fork](https://img.shields.io/github/forks/ufo-tech/json-rpc-client-sdk?color=green&logo=github&style=flat)
 
 ## Generate SDK 
-Run cli command ``` php bin/generate.php ```
+Run cli command ``` php bin/make.php ```
 
 ``` bash
-$ php bin/generate.php
+$ php bin/make.php
   > Enter API vendor name: some_vendor
   > Enter the API url: http://some.url/api
 ```
@@ -54,8 +54,7 @@ try {
     //  ["id"]=> int(279232969)
     //  ["login"]=> string(3) "some_login"
     //  ["status"]=> int(0)
-}
-
+    
 } catch (\Throwable $e) {
     echo $e->getMessage() . PHP_EOL;
 }

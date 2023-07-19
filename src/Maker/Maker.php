@@ -13,6 +13,7 @@ use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
 use Symfony\Component\Cache\Exception\CacheException;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpClient\CurlHttpClient;
 use Symfony\Contracts\Cache\ItemInterface;
 use Ufo\RpcSdk\Exceptions\SdkBuilderException;
 use Ufo\RpcSdk\Maker\Definitions\ArgumentDefinition;
@@ -41,7 +42,7 @@ class Maker
     )
     {
         $this->projectRootDir = $projectRootDir ?? getcwd();
-        $domain = parse_url($this->apiUrl)["host"];
+        $domain = parse_url(trim($this->apiUrl))["host"];
         $this->apiVendorAlias = Str::asCamelCase($apiVendorAlias ?? str_replace('.', '', $domain));
         $this->init();
     }
@@ -89,7 +90,9 @@ class Maker
 
         $this->rpcResponse = $cache->get('rpc.response', function (ItemInterface $item) use ($apiUrl, $cacheLifetime) {
             $item->expiresAfter($cacheLifetime);
-            return json_decode(file_get_contents($apiUrl), true);
+            $client = new CurlHttpClient();
+            $request = $client->request('GET', $apiUrl);
+            return json_decode($request->getContent(), true);
         });
 
     }
@@ -100,7 +103,7 @@ class Maker
 
     }
 
-    public function make(): void
+    public function make(?callable $callback = null): void
     {
         foreach ($this->getRpcProcedures() as $procedureName => $procedureData) {
             $this->classAddOrUpdate($procedureName, $procedureData);
@@ -109,6 +112,9 @@ class Maker
         foreach ($this->rpcProcedureClasses as $rpcProcedureClass) {
             $creator = new SdkClassProcedureMaker($this, $rpcProcedureClass);
             $creator->generate();
+            if (!is_null($callback)) {
+                $callback($rpcProcedureClass);
+            }
         }
     }
 

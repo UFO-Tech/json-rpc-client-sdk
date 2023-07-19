@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "edc679931a1304266d5a0f40b7891682",
+    "content-hash": "680ca5a7a0d742381aebd44829e41a64",
     "packages": [
         {
             "name": "doctrine/annotations",
@@ -3331,6 +3331,44 @@
                 }
             ],
             "time": "2023-04-21T08:48:44+00:00"
+        },
+        {
+            "name": "ufo-cms/colored_cli",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/UFO-CMS/colored_cli.git",
+                "reference": "fc0dffd1cf43f1b7f57a1ec81657559e701e89bb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/UFO-CMS/colored_cli/zipball/fc0dffd1cf43f1b7f57a1ec81657559e701e89bb",
+                "reference": "fc0dffd1cf43f1b7f57a1ec81657559e701e89bb",
+                "shasum": ""
+            },
+            "require": {
+                "php": "8.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "UfoCms\\ColoredCli\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Alex Maystrenko"
+                }
+            ],
+            "support": {
+                "issues": "https://github.com/UFO-CMS/colored_cli/issues",
+                "source": "https://github.com/UFO-CMS/colored_cli/tree/v1.0.0"
+            },
+            "time": "2022-10-25T09:22:48+00:00"
         },
         {
             "name": "ufo-tech/rpc-exceptions",
