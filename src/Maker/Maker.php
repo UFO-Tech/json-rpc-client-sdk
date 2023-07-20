@@ -36,6 +36,7 @@ class Maker
     public function __construct(
         protected string  $apiUrl,
         protected ?string $apiVendorAlias = null,
+        protected array   $headers = [],
         protected string  $namespace = self::DEFAULT_NAMESPACE,
         protected ?string $projectRootDir = null,
         protected int     $cacheLifeTimeSecond = self::DEFAULT_CACHE_LIFETIME
@@ -89,15 +90,21 @@ class Maker
             directory: $this->projectRootDir . '/var/cache/maker/'
         );
         $apiUrl = $this->apiUrl;
+        $headers = [
+            'headers' => $this->headers,
+        ];
         $cacheLifetime = $this->cacheLifeTimeSecond;
 
-        $this->rpcResponse = $cache->get('rpc.response', function (ItemInterface $item) use ($apiUrl, $cacheLifetime) {
-            $item->expiresAfter($cacheLifetime);
-            $client = HttpClient::create();
-            $request = $client->request('GET', $apiUrl);
-            return json_decode($request->getContent(), true);
-        });
-
+        $this->rpcResponse = $cache->get(
+            'rpc.response',
+            function (ItemInterface $item)
+            use ($apiUrl, $cacheLifetime, $headers): string {
+                $item->expiresAfter($cacheLifetime);
+                $client = HttpClient::create();
+                $request = $client->request('GET', $apiUrl, $headers);
+                return json_decode($request->getContent(), true);
+            }
+        );
     }
 
     public function getRpcProcedures(): array
@@ -140,7 +147,7 @@ class Maker
                 unlink($reflection->getFileName());
             } catch (\Throwable $e) {
                 throw new SdkBuilderException(
-                    'Can`t remove previous version for class "'.$className.'"',
+                    'Can`t remove previous version for class "' . $className . '"',
                     previous: $e
                 );
             }
