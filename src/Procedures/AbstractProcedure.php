@@ -3,7 +3,7 @@
 namespace Ufo\RpcSdk\Procedures;
 
 
-use Symfony\Component\HttpClient\CurlHttpClient;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Ufo\RpcObject\RpcRequest;
 use Ufo\RpcObject\RpcResponse;
@@ -31,7 +31,7 @@ abstract class AbstractProcedure implements ISdkMethodClass
     )
     {
         $this->requestId = $requestId ?? uniqid();
-        $this->httpClient = $httpClient ?? new CurlHttpClient($httpRequestOptions);
+        $this->httpClient = $httpClient ?? HttpClient::create($httpRequestOptions);
     }
 
     /**

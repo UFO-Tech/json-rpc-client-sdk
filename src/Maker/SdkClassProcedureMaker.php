@@ -23,7 +23,10 @@ class SdkClassProcedureMaker
     {
     }
 
-    public function generate()
+    /**
+     * @throws \Exception
+     */
+    public function generate(): void
     {
         $generator = $this->maker->getGenerator();
         $interface = explode('\\', static::SDK_PROCEDURE_INTERFACE);

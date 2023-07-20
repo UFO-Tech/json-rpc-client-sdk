@@ -3,17 +3,17 @@
 namespace Ufo\RpcSdk\Maker;
 
 use Psr\Cache\InvalidArgumentException;
+use ReflectionClass;
 use Symfony\Bundle\MakerBundle\FileManager;
 use Symfony\Bundle\MakerBundle\Generator;
 use Symfony\Bundle\MakerBundle\Str;
 use Symfony\Bundle\MakerBundle\Util\AutoloaderUtil;
 use Symfony\Bundle\MakerBundle\Util\ComposerAutoloaderFinder;
 use Symfony\Bundle\MakerBundle\Util\MakerFileLinkFormatter;
-use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
 use Symfony\Component\Cache\Exception\CacheException;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\HttpClient\CurlHttpClient;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\Cache\ItemInterface;
 use Ufo\RpcSdk\Exceptions\SdkBuilderException;
 use Ufo\RpcSdk\Maker\Definitions\ArgumentDefinition;
@@ -43,7 +43,10 @@ class Maker
     {
         $this->projectRootDir = $projectRootDir ?? getcwd();
         $domain = parse_url(trim($this->apiUrl))["host"];
-        $this->apiVendorAlias = Str::asCamelCase($apiVendorAlias ?? str_replace('.', '', $domain));
+        if (empty($apiVendorAlias)) {
+            $apiVendorAlias = str_replace('.', '', $domain);
+        }
+        $this->apiVendorAlias = Str::asCamelCase($apiVendorAlias);
         $this->init();
     }
 
@@ -90,7 +93,7 @@ class Maker
 
         $this->rpcResponse = $cache->get('rpc.response', function (ItemInterface $item) use ($apiUrl, $cacheLifetime) {
             $item->expiresAfter($cacheLifetime);
-            $client = new CurlHttpClient();
+            $client = HttpClient::create();
             $request = $client->request('GET', $apiUrl);
             return json_decode($request->getContent(), true);
         });
@@ -103,6 +106,11 @@ class Maker
 
     }
 
+    /**
+     * @param callable|null $callback
+     * @return void
+     * @throws \Exception
+     */
     public function make(?callable $callback = null): void
     {
         foreach ($this->getRpcProcedures() as $procedureName => $procedureData) {
@@ -110,10 +118,31 @@ class Maker
         }
 
         foreach ($this->rpcProcedureClasses as $rpcProcedureClass) {
+            $this->removePreviousClass($rpcProcedureClass->getFullName());
             $creator = new SdkClassProcedureMaker($this, $rpcProcedureClass);
             $creator->generate();
             if (!is_null($callback)) {
                 $callback($rpcProcedureClass);
+            }
+        }
+    }
+
+    /**
+     * @param string $className
+     * @return void
+     * @throws SdkBuilderException
+     */
+    protected function removePreviousClass(string $className): void
+    {
+        if (class_exists($className)) {
+            try {
+                $reflection = new ReflectionClass($className);
+                unlink($reflection->getFileName());
+            } catch (\Throwable $e) {
+                throw new SdkBuilderException(
+                    'Can`t remove previous version for class "'.$className.'"',
+                    previous: $e
+                );
             }
         }
     }
