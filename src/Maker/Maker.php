@@ -98,7 +98,7 @@ class Maker
         $this->rpcResponse = $cache->get(
             'rpc.response',
             function (ItemInterface $item)
-            use ($apiUrl, $cacheLifetime, $headers): string {
+            use ($apiUrl, $cacheLifetime, $headers): array {
                 $item->expiresAfter($cacheLifetime);
                 $client = HttpClient::create();
                 $request = $client->request('GET', $apiUrl, $headers);
