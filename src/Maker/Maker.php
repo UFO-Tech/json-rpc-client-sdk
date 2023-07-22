@@ -10,10 +10,12 @@ use Symfony\Bundle\MakerBundle\Str;
 use Symfony\Bundle\MakerBundle\Util\AutoloaderUtil;
 use Symfony\Bundle\MakerBundle\Util\ComposerAutoloaderFinder;
 use Symfony\Bundle\MakerBundle\Util\MakerFileLinkFormatter;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
 use Symfony\Component\Cache\Exception\CacheException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Ufo\RpcSdk\Exceptions\SdkBuilderException;
 use Ufo\RpcSdk\Maker\Definitions\ArgumentDefinition;
@@ -39,7 +41,8 @@ class Maker
         protected array   $headers = [],
         protected string  $namespace = self::DEFAULT_NAMESPACE,
         protected ?string $projectRootDir = null,
-        protected int     $cacheLifeTimeSecond = self::DEFAULT_CACHE_LIFETIME
+        protected int     $cacheLifeTimeSecond = self::DEFAULT_CACHE_LIFETIME,
+        protected ?CacheInterface $cache = null
     )
     {
         $this->projectRootDir = $projectRootDir ?? getcwd();
@@ -69,6 +72,14 @@ class Maker
             ),
             $this->namespace
         );
+        if (is_null($this->cache)) {
+            $this->cache = new FilesystemAdapter(
+                'ufo_sdk_maker_cache', // Унікальний префікс для ідентифікації вашого кешу
+                $this->cacheLifeTimeSecond,
+                $this->projectRootDir . '/var/cache/maker/'
+            );
+
+        }
     }
 
     /**
@@ -86,17 +97,14 @@ class Maker
      */
     protected function getApiRpcDoc(): void
     {
-        $cache = new PhpFilesAdapter(
-            directory: $this->projectRootDir . '/var/cache/maker/'
-        );
+
         $apiUrl = $this->apiUrl;
         $headers = [
             'headers' => $this->headers,
         ];
         $cacheLifetime = $this->cacheLifeTimeSecond;
-
-        $this->rpcResponse = $cache->get(
-            'rpc.response',
+        $this->rpcResponse = $this->cache->get(
+            'rpc.response' . $this->apiVendorAlias,
             function (ItemInterface $item)
             use ($apiUrl, $cacheLifetime, $headers): array {
                 $item->expiresAfter($cacheLifetime);
