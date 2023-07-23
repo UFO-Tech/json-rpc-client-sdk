@@ -31,6 +31,8 @@ class Maker
     protected Generator $generator;
     protected array $rpcResponse;
 
+    protected array $dtoStack = [];
+
     protected ?UfoEnvelope $envelope = null;
 
     /**
@@ -63,6 +65,13 @@ class Maker
      */
     protected function init(): void
     {
+        if (is_null($this->cache)) {
+            $this->cache = new FilesystemAdapter(
+                'ufo_sdk_maker_cache', // Унікальний префікс для ідентифікації вашого кешу
+                $this->cacheLifeTimeSecond,
+                $this->projectRootDir . '/var/cache/maker/'
+            );
+        }
         $this->getApiRpcDoc();
         $this->generator = new Generator(
             new FileManager(
@@ -75,14 +84,6 @@ class Maker
             ),
             $this->namespace
         );
-        if (is_null($this->cache)) {
-            $this->cache = new FilesystemAdapter(
-                'ufo_sdk_maker_cache', // Унікальний префікс для ідентифікації вашого кешу
-                $this->cacheLifeTimeSecond,
-                $this->projectRootDir . '/var/cache/maker/'
-            );
-
-        }
     }
 
     /**
@@ -135,24 +136,60 @@ class Maker
     }
 
     /**
-     * @param callable|null $callback
+     * @param callable|null $callbackOutput
      * @return void
      * @throws \Exception
      */
-    public function make(?callable $callback = null): void
+    public function make(?callable $callbackOutput = null): void
     {
         foreach ($this->getRpcProcedures() as $procedureName => $procedureData) {
+            $this->makeDto($procedureData);
             $this->classAddOrUpdate($procedureName, $procedureData);
         }
-        // todo DTO generate
         foreach ($this->rpcProcedureClasses as $rpcProcedureClass) {
             $this->removePreviousClass($rpcProcedureClass->getFullName());
             $creator = new SdkClassProcedureMaker($this, $rpcProcedureClass);
             $creator->generate();
-            if (!is_null($callback)) {
-                $callback($rpcProcedureClass);
+            if (!is_null($callbackOutput)) {
+                $callbackOutput($rpcProcedureClass);
             }
         }
+    }
+
+    protected function makeDto(array &$procedureData): void
+    {
+        if ($this->envelope && !empty($procedureData['responseFormat'])) {
+            $dto = $this->generateDto($procedureData);
+
+            if ($procedureData['returns'] === 'object') {
+                MethodDefinition::addTypeExclude('DTO\\' . $dto);
+                $procedureData['returns'] = 'DTO\\' . $dto;
+            } else {
+                $procedureData['returnsDoc'] = 'DTO\\' . $dto . '[]';
+            }
+        }
+    }
+
+    protected function generateDto(array $procedureData): string
+    {
+        $format = $procedureData['responseFormat'];
+        $format = $format[0] ?? $format;
+        $className = $this->dtoStack[md5(serialize($format))] ?? null;
+
+        if (is_null($className)) {
+            $className = SdkClassDtoMaker::generateName($procedureData['name']);
+            $this->dtoStack[md5(serialize($format))] = $className;
+
+            $class = new ClassDefinition(
+                $this->namespace . '\\' . $this->apiVendorAlias . '\\DTO',
+                $className
+            );
+            $this->removePreviousClass($class->getFullName());
+            $class->setProperties($procedureData['responseFormat']);
+            $creator = new SdkClassDtoMaker($this, $class);
+            $creator->generate();
+        }
+        return $className;
     }
 
     /**
@@ -166,6 +203,7 @@ class Maker
             try {
                 $reflection = new ReflectionClass($className);
                 unlink($reflection->getFileName());
+                usleep(300);
             } catch (\Throwable $e) {
                 throw new SdkBuilderException(
                     'Can`t remove previous version for class "' . $className . '"',
@@ -192,7 +230,7 @@ class Maker
             $className = Str::asCamelCase($pArray[0]);
         }
         $method = new MethodDefinition(end($pArray), $procedureName);
-        $method->setReturns($procedureData['returns']);
+        $method->setReturns($procedureData['returns'], $procedureData['returnsDoc'] ?? null);
         try {
             $class = $this->getClassByName($className);
         } catch (SdkBuilderException) {

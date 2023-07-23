@@ -1,15 +1,12 @@
 <?php
 
-use Symfony\Component\HttpClient\CurlHttpClient;
-use Ufo\RpcObject\Transformer\ResponseCreator;
-use Ufo\RpcSdk\Client\Shortener\UserProcedure;
-use Ufo\RpcSdk\Procedures\AbstractProcedure;
+use Ufo\RpcSdk\Client\Nginx\UserProcedure;
 use Ufo\RpcSdk\Procedures\RequestResponseStack;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
 $headers = [
-    'Ufo-RPC-Token'=>'some_security_token'
+    'Ufo-RPC-Token'=>'ClientTokenExample'
 ];
 
 
@@ -17,7 +14,7 @@ try{
     $userService = new UserProcedure(
         headers: $headers
     );
-    $user = $userService->createUser('qwe', 'dfdsfdsfsd');
+    $user = $userService->allUsers();
     var_dump($user);
 
 } catch (\Throwable $e) {

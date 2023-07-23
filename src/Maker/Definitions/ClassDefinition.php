@@ -9,7 +9,12 @@ class ClassDefinition
     /**
      * @var MethodDefinition[]
      */
-    protected array $methods;
+    protected array $methods = [];
+
+    /**
+     * @var array ['name' => 'type']
+     */
+    protected array $properties = [];
 
     /**
      * @param string $namespace
@@ -33,6 +38,25 @@ class ClassDefinition
     public function addMethod(MethodDefinition $method): void
     {
         $this->methods[$method->getName()] = $method;
+    }
+
+    /**
+     * @return array
+     */
+    public function getProperties(): array
+    {
+        return $this->properties;
+    }
+
+    /**
+     * @param array $properties
+     */
+    public function setProperties(array $properties): void
+    {
+        if (isset($properties[0]) && is_array($properties[0])) {
+            $properties = $properties[0];
+        }
+        $this->properties = $properties;
     }
 
     /**

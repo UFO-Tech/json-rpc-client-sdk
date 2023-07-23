@@ -10,6 +10,10 @@ class MethodDefinition
     protected array $arguments = [];
     protected array $returns = [];
 
+    protected static array $typesExclude = [];
+
+    protected string $returnsDoc;
+
     /**
      * @param string $name
      * @param string $apiProcedure
@@ -24,6 +28,14 @@ class MethodDefinition
     public function addArgument(ArgumentDefinition $argument): void
     {
         $this->arguments[$argument->getName()] = $argument;
+    }
+
+    /**
+     * @param string $typeExclude
+     */
+    public static function addTypeExclude(string $typeExclude): void
+    {
+        self::$typesExclude[$typeExclude] = $typeExclude;
     }
 
     /**
@@ -56,7 +68,7 @@ class MethodDefinition
     }
     public static function normalizeType(string $type): string
     {
-        return match ($type) {
+        return self::$typesExclude[$type] ?? match ($type) {
             'any', 'mixed' => 'mixed',
             'arr', 'array' => 'array',
             'boolean', 'true', 'false' => 'bool',
@@ -84,9 +96,19 @@ class MethodDefinition
     }
 
     /**
-     * @param array|string $returns
+     * @return string
      */
-    public function setReturns(array|string $returns): void
+    public function getReturnsDoc(): string
+    {
+        return $this->returnsDoc;
+    }
+
+    /**
+     * @param array|string $returns
+     * @param string|null $returnsDoc
+     * @return void
+     */
+    public function setReturns(array|string $returns, ?string $returnsDoc = null): void
     {
         if (is_array($returns)) {
             $this->returns = array_unique(array_map(function ($v) {
@@ -94,6 +116,11 @@ class MethodDefinition
             }, $returns));
         } else {
             $this->returns = [MethodDefinition::normalizeType($returns)];
+        }
+        if (is_null($returnsDoc)) {
+            $this->returnsDoc = implode('|', $this->returns);
+        } else {
+            $this->returnsDoc = $returnsDoc;
         }
     }
 

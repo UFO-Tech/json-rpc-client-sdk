@@ -4,17 +4,15 @@ namespace Ufo\RpcSdk\Maker;
 
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Ufo\RpcObject\RpcResponse;
-use Ufo\RpcObject\Transformer\Transformer;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
 use Ufo\RpcSdk\Maker\Definitions\ClassDefinition;
 use Ufo\RpcSdk\Procedures\AbstractProcedure;
 use Ufo\RpcSdk\Procedures\ApiMethod;
 use Ufo\RpcSdk\Procedures\ApiUrl;
 
-class SdkClassProcedureMaker
+class SdkClassDtoMaker
 {
-    const SDK_PROCEDURE_INTERFACE = ISdkMethodClass::class;
-    const DEFAULT_TEMPLATE = __DIR__ . '/../../templates/procedure.php.twig';
+    const DEFAULT_TEMPLATE = __DIR__ . '/../../templates/dto.php.twig';
 
     protected string $template = self::DEFAULT_TEMPLATE;
 
@@ -31,7 +29,6 @@ class SdkClassProcedureMaker
     public function generate(): void
     {
         $generator = $this->maker->getGenerator();
-        $interface = explode('\\', static::SDK_PROCEDURE_INTERFACE);
         $generator->generateClass(
             $this->classDefinition->getFullName(),
             $this->template,
@@ -42,18 +39,11 @@ class SdkClassProcedureMaker
                     'url' => $this->maker->getApiUrl(),
                 ],
                 'uses' => [
-                    static::SDK_PROCEDURE_INTERFACE,
-                    AbstractProcedure::class,
-                    ApiMethod::class,
-                    ApiUrl::class,
-                    AutoconfigureTag::class,
-                    Transformer::class,
                 ],
-                'response'=>'RpcResponse',
-                'interfaces' => [end($interface)],
-                'extends' => 'AbstractProcedure',
+                'interfaces' => [],
+                'extends' => '',
                 'methods' => $this->classDefinition->getMethods(),
-                'properties' => [],
+                'properties' => $this->classDefinition->getProperties(),
                 'tab' => function (int $count = 1) {
                     return str_repeat(' ', 4 * $count);
                 }
@@ -63,6 +53,17 @@ class SdkClassProcedureMaker
         $generator->writeChanges();
     }
 
+    public static function generateName(string $procedure): string
+    {
+        $procedureParts = explode('.', $procedure);
+        $name = str_replace('Procedure', '', $procedureParts[0]);
+
+        if (isset($procedureParts[1])) {
+            $name .= ucfirst($procedureParts[1]);
+        }
+
+        return $name . "DTO";
+    }
 
     protected function getTemplateName(): string
     {
