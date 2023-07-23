@@ -21,6 +21,7 @@ use Ufo\RpcSdk\Exceptions\SdkBuilderException;
 use Ufo\RpcSdk\Maker\Definitions\ArgumentDefinition;
 use Ufo\RpcSdk\Maker\Definitions\ClassDefinition;
 use Ufo\RpcSdk\Maker\Definitions\MethodDefinition;
+use Ufo\RpcSdk\Maker\Definitions\UfoEnvelope;
 
 class Maker
 {
@@ -29,6 +30,8 @@ class Maker
 
     protected Generator $generator;
     protected array $rpcResponse;
+
+    protected ?UfoEnvelope $envelope = null;
 
     /**
      * @var ClassDefinition[]
@@ -113,12 +116,22 @@ class Maker
                 return json_decode($request->getContent(), true);
             }
         );
+        $this->checkUfoEnvelop();
     }
 
     public function getRpcProcedures(): array
     {
         return $this->rpcResponse['services'] ?? $this->rpcResponse['procedures'];
 
+    }
+
+    protected function checkUfoEnvelop(): void
+    {
+        $env = $this->rpcResponse['envelope'] ?? '';
+        $matches = [];
+        if (preg_match('/UFO-RPC-(\d)/', $env, $matches)) {
+            $this->envelope = new UfoEnvelope((int)$matches[1]);
+        }
     }
 
     /**
@@ -131,7 +144,7 @@ class Maker
         foreach ($this->getRpcProcedures() as $procedureName => $procedureData) {
             $this->classAddOrUpdate($procedureName, $procedureData);
         }
-
+        // todo DTO generate
         foreach ($this->rpcProcedureClasses as $rpcProcedureClass) {
             $this->removePreviousClass($rpcProcedureClass->getFullName());
             $creator = new SdkClassProcedureMaker($this, $rpcProcedureClass);

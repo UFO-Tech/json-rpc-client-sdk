@@ -2,8 +2,12 @@
 
 namespace Ufo\RpcSdk\Interfaces;
 
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+
+#[AutoconfigureTag(ISdkMethodClass::TAG)]
 interface ISdkMethodClass
 {
+    const TAG = 'ufo.sdk_method_class';
     /**
      * @return int|string
      */

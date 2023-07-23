@@ -2,6 +2,7 @@
 
 namespace Ufo\RpcSdk\Maker;
 
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Ufo\RpcObject\RpcResponse;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
 use Ufo\RpcSdk\Maker\Definitions\ClassDefinition;
@@ -44,7 +45,8 @@ class SdkClassProcedureMaker
                     AbstractProcedure::class,
                     ApiMethod::class,
                     ApiUrl::class,
-                    RpcResponse::class
+                    RpcResponse::class,
+                    AutoconfigureTag::class,
                 ],
                 'response'=>'RpcResponse',
                 'interfaces' => [end($interface)],
