@@ -39,7 +39,7 @@ if (isset($interfaces) && !empty($interfaces)) {
 * @link <?= $vendor['url'] . PHP_EOL ?>
 */
 #[ApiUrl('<?=$vendor['url'] ?>')]
-#[AutoconfigureTag(<?=ISdkMethodClass::TAG?>)]
+#[AutoconfigureTag('<?=ISdkMethodClass::TAG?>')]
 class <?= $class_name_full ?><?= PHP_EOL ?>
 {
 <?php
