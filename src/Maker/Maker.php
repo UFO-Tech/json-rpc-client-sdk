@@ -161,7 +161,9 @@ class Maker
         if ($this->envelope && !empty($procedureData['responseFormat'])) {
             $dto = $this->generateDto($procedureData);
 
-            if ($procedureData['returns'] === 'object') {
+            if ($procedureData['returns'] === 'object'
+                || $procedureData['returns'] === 'array'
+            ) {
                 MethodDefinition::addTypeExclude('DTO\\' . $dto);
                 $procedureData['returns'] = 'DTO\\' . $dto;
             } else {

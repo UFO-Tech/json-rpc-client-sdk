@@ -55,12 +55,14 @@ class MethodDefinition
         foreach ($this->arguments as $name => $argument) {
             $args[$name] = $argument->getType() . ' $' . $name;
             if ($argument->isOptional()) {
-                $value = $argument->getDefaultValue();
-                if (is_null($value)) {
-                    $value = 'null';
-                } elseif($value === '') {
-                    $value = '""';
-                }
+                $value = match ($argument->getDefaultValue()) {
+                    null => 'null',
+                    '' => '""',
+                    [] => '[]',
+                    true => 'true',
+                    false => 'false',
+                    default => $argument->getDefaultValue()
+                };
                 $args[$name] .= ' = ' . $value;
             }
         }
