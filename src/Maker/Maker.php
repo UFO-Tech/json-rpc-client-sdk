@@ -162,7 +162,7 @@ class Maker
             $dto = $this->generateDto($procedureData);
 
             if ($procedureData['returns'] === 'object'
-                || $procedureData['returns'] === 'array'
+                || ($procedureData['returns'] === 'array' && $procedureData['is_collection'] === false)
             ) {
                 MethodDefinition::addTypeExclude('DTO\\' . $dto);
                 $procedureData['returns'] = 'DTO\\' . $dto;
@@ -172,10 +172,14 @@ class Maker
         }
     }
 
-    protected function generateDto(array $procedureData): string
+    protected function generateDto(array &$procedureData): string
     {
+        $procedureData['is_collection'] = false;
         $format = $procedureData['responseFormat'];
-        $format = $format[0] ?? $format;
+        if (isset($format[0])) {
+            $format = $format[0];
+            $procedureData['is_collection'] = true;
+        }
         $className = $this->dtoStack[md5(serialize($format))] ?? null;
 
         if (is_null($className)) {
