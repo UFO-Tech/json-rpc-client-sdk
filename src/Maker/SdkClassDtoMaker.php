@@ -2,13 +2,7 @@
 
 namespace Ufo\RpcSdk\Maker;
 
-use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
-use Ufo\RpcObject\RpcResponse;
-use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
 use Ufo\RpcSdk\Maker\Definitions\ClassDefinition;
-use Ufo\RpcSdk\Procedures\AbstractProcedure;
-use Ufo\RpcSdk\Procedures\ApiMethod;
-use Ufo\RpcSdk\Procedures\ApiUrl;
 
 class SdkClassDtoMaker
 {

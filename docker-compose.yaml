@@ -16,6 +16,16 @@ services:
     networks:
       - net_vitamin
 
+  php-cli:
+    container_name: php_cli_${PROJECT_NAME}
+    build:
+      context: ./docker/configs/php-cli
+      dockerfile: Dockerfile
+    volumes:
+      - ./:${WORKDIR}
+    networks:
+      - net_vitamin
+
 networks:
   net_vitamin:
     name: vitamin_bot_net_vitamin

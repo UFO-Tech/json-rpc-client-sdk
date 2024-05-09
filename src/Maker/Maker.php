@@ -11,7 +11,6 @@ use Symfony\Bundle\MakerBundle\Util\AutoloaderUtil;
 use Symfony\Bundle\MakerBundle\Util\ComposerAutoloaderFinder;
 use Symfony\Bundle\MakerBundle\Util\MakerFileLinkFormatter;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
-use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
 use Symfony\Component\Cache\Exception\CacheException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpClient\HttpClient;
@@ -101,7 +100,6 @@ class Maker
      */
     protected function getApiRpcDoc(): void
     {
-
         $apiUrl = $this->apiUrl;
         $headers = [
             'headers' => $this->headers,
@@ -285,6 +283,4 @@ class Maker
     {
         return $this->apiVendorAlias;
     }
-
-
 }
