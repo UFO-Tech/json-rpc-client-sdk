@@ -2,8 +2,6 @@
 
 namespace Ufo\RpcSdk\Maker\Definitions;
 
-use Ufo\RpcSdk\Exceptions\SdkBuilderException;
-
 class ArgumentDefinition
 {
     protected string $type;

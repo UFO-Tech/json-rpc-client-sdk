@@ -12,7 +12,7 @@ class MethodDefinition
 
     protected static array $typesExclude = [];
 
-    protected string $returnsDoc;
+    protected ?string $returnsDoc = null;
 
     /**
      * @param string $name
@@ -68,6 +68,7 @@ class MethodDefinition
         }
         return implode(', ', $args);
     }
+
     public static function normalizeType(string $type): string
     {
         return self::$typesExclude[$type] ?? match ($type) {
@@ -81,6 +82,7 @@ class MethodDefinition
             default   => 'object'
         };
     }
+
     /**
      * @return string
      */
@@ -98,9 +100,9 @@ class MethodDefinition
     }
 
     /**
-     * @return string
+     * @return ?string
      */
-    public function getReturnsDoc(): string
+    public function getReturnsDoc(): ?string
     {
         return $this->returnsDoc;
     }
@@ -133,5 +135,4 @@ class MethodDefinition
     {
         return $this->apiProcedure;
     }
-
 }
