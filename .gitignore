@@ -24,3 +24,5 @@
 /logs/nginx/
 /docker/configs/nginx/project.conf
 /sdk/
+/composer.lock
+/bin/test.php

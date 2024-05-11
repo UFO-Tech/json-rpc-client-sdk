@@ -2,6 +2,7 @@
 
 namespace Ufo\RpcSdk\Maker;
 
+use Exception;
 use Psr\Cache\InvalidArgumentException;
 use ReflectionClass;
 use Symfony\Bundle\MakerBundle\FileManager;
@@ -17,11 +18,15 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
+use Throwable;
 use Ufo\RpcSdk\Exceptions\SdkBuilderException;
 use Ufo\RpcSdk\Maker\Definitions\ArgumentDefinition;
 use Ufo\RpcSdk\Maker\Definitions\ClassDefinition;
 use Ufo\RpcSdk\Maker\Definitions\MethodDefinition;
 use Ufo\RpcSdk\Maker\Definitions\UfoEnvelope;
+
+use function is_array;
+use function preg_match;
 
 class Maker
 {
@@ -96,8 +101,8 @@ class Maker
 
     /**
      * @return void
-     * @throws \Psr\Cache\InvalidArgumentException
-     * @throws \Symfony\Component\Cache\Exception\CacheException
+     * @throws InvalidArgumentException
+     * @throws CacheException
      */
     protected function getApiRpcDoc(): void
     {
@@ -122,7 +127,7 @@ class Maker
 
     public function getRpcProcedures(): array
     {
-        return $this->rpcResponse['services'] ?? $this->rpcResponse['procedures'];
+        return $this->rpcResponse['methods'] ?? $this->rpcResponse['services'] ?? $this->rpcResponse['procedures'];
 
     }
 
@@ -138,7 +143,7 @@ class Maker
     /**
      * @param callable|null $callbackOutput
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
     public function make(?callable $callbackOutput = null): void
     {
@@ -158,7 +163,7 @@ class Maker
 
     protected function makeDto(array &$procedureData): void
     {
-        if ($this->envelope && !empty($procedureData['responseFormat'])) {
+        if ($this->envelope && is_array($procedureData['responseFormat']) && !empty($procedureData['responseFormat'])) {
             $dto = $this->generateDto($procedureData);
 
             if ($procedureData['returns'] === 'object'
@@ -210,7 +215,7 @@ class Maker
                 $reflection = new ReflectionClass($className);
                 unlink($reflection->getFileName());
                 usleep(300);
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 throw new SdkBuilderException(
                     'Can`t remove previous version for class "' . $className . '"',
                     previous: $e
@@ -229,13 +234,17 @@ class Maker
         $ns = $this->namespace;
         $ns .= '\\' . $this->apiVendorAlias;
 
-        $pArray = explode('.', $procedureName);
-        if (count($pArray) == 1) {
+        $pMatch = [];
+        preg_match("/(\w+)(\W+)(\w+)/", $procedureName, $pMatch);
+
+        if (count($pMatch) === 0) {
             $className = 'Main';
+            $apiMethod = $procedureName;
         } else {
-            $className = Str::asCamelCase($pArray[0]);
+            $className = Str::asCamelCase($pMatch[1]);
+            $apiMethod = $pMatch[3];
         }
-        $method = new MethodDefinition(end($pArray), $procedureName);
+        $method = new MethodDefinition($apiMethod, $procedureName);
         $method->setReturns($procedureData['returns'], $procedureData['returnsDoc'] ?? null);
         try {
             $class = $this->getClassByName($className);
@@ -245,12 +254,14 @@ class Maker
         }
         $class->addMethod($method);
 
+        $assertions = $procedureData['symfony_assertions'] ?? [];
         foreach ($procedureData['parameters'] as $data) {
             $argument = new ArgumentDefinition(
                 $data['name'],
                 $data['type'],
                 $data['optional'],
                 $data['default'] ?? null,
+                $assertions[$data['name']] ?? []
             );
             $method->addArgument($argument);
         }

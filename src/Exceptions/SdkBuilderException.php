@@ -2,7 +2,9 @@
 
 namespace Ufo\RpcSdk\Exceptions;
 
-class SdkBuilderException extends \Exception
+use Exception;
+
+class SdkBuilderException extends Exception
 {
 
 }

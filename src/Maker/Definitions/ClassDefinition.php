@@ -4,6 +4,10 @@ namespace Ufo\RpcSdk\Maker\Definitions;
 
 use JetBrains\PhpStorm\Pure;
 
+use function array_map;
+use function array_merge;
+use function array_unique;
+
 class ClassDefinition
 {
     /**
@@ -30,6 +34,16 @@ class ClassDefinition
     public function getMethods(): array
     {
         return $this->methods;
+    }
+
+    public function getMethodsUses(): array
+    {
+        $uses = [];
+        array_map(function(MethodDefinition $m) use (&$uses) {
+            $m->getArgumentsSignature(true);
+            $uses = array_merge($uses, $m->getUses());
+        }, $this->methods);
+        return array_unique($uses);
     }
 
     /**

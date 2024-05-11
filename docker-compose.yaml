@@ -14,9 +14,9 @@ services:
     volumes:
       - ./:${WORKDIR}
     networks:
-      - net_vitamin
+      - net_tm
 
 networks:
-  net_vitamin:
-    name: vitamin_bot_net_vitamin
+  net_tm:
+    name: tm-hub_net_tm
     external: true

@@ -15,7 +15,7 @@ use Ufo\RpcSdk\Maker\Definitions\MethodDefinition;
 * @package json-rpc-client-sdk
 * @generated ufo-tech/json-rpc-client-sdk
 * @author Alex Maystrenko <ashterix69@gmail.com>
-* @see https://ufo-tech.github.io/json-rpc-client-sdk/ Library documentation
+* @see https://docs.ufo-tech.space/bin/view/docs/JsonRpcClientSdk Library documentation
 * @license https://github.com/ufo-tech/json-rpc-client-sdk/blob/main/LICENSE
 */
 namespace <?= $namespace ?>;
@@ -47,10 +47,11 @@ foreach ($methods as $name => $method) {
     /**
      * @var MethodDefinition $method
      */
-    $args = $method->getArgumentsSignature()
+    $args = $method->getArgumentsSignature();
+    $argsAttr = $method->getArgumentsSignature(true);
     ?>
     /**
-    * @method <?= $class_name ?>.<?= $method->getName() . PHP_EOL?>
+    * @method <?= $method->getApiProcedure() . PHP_EOL; ?>
     *
 <?php
 if ($args) {
@@ -64,7 +65,7 @@ foreach (explode(', ', $args) as $arg) {
     * @return <?= $method->getReturnsDoc() . PHP_EOL ?>
     */
     #[ApiMethod('<?=$method->getApiProcedure() ?>')]
-    public function <?= $method->getName() ?>(<?= $args ?>)<?= !empty($method->getReturns()) ? ': ' . implode('|', $method->getReturns()) : '' ?> <?= PHP_EOL ?>
+    public function <?= $method->getName() ?>(<?= $argsAttr ?>)<?= !empty($method->getReturns()) ? ': ' . implode('|', $method->getReturns()) : '' ?> <?= PHP_EOL ?>
     {
 <?php
     if (!str_starts_with($method->getReturnsDoc(), 'DTO')) {

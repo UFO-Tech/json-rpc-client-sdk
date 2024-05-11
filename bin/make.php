@@ -23,7 +23,8 @@ try {
     echo CliColor::GREEN->value . "Start generate SDK for '$vendorName' ($apiUrl)" . CliColor::RESET->value . PHP_EOL;
 
     $maker->make(function (ClassDefinition $classDefinition) {
-        echo 'Create class: ' . CliColor::LIGHT_BLUE->value . $classDefinition->getFullName() . '' . CliColor::RESET->value . PHP_EOL;
+        echo 'Create class: ' . CliColor::LIGHT_BLUE->value . $classDefinition->getFullName() . CliColor::RESET->value
+             .PHP_EOL;
         echo 'Methods: ' . PHP_EOL;
         foreach ($classDefinition->getMethods() as $method) {
             echo CliColor::CYAN->value
@@ -37,8 +38,9 @@ try {
         echo str_repeat('=', 20) . PHP_EOL;
     });
     echo CliColor::GREEN->value . "Generate SDK is complete" . CliColor::RESET->value . PHP_EOL;
-} catch (\Throwable $e) {
+} catch (Throwable $e) {
     echo CliColor::RED->value . "Error: " . CliColor::RESET->value;
     echo $e->getMessage() . PHP_EOL;
+    echo $e->getFile() . ': ' .$e->getLine() . PHP_EOL;
 }
 

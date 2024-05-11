@@ -2,6 +2,7 @@
 
 namespace Ufo\RpcSdk\Maker;
 
+use Exception;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Ufo\RpcObject\RpcResponse;
 use Ufo\RpcObject\Transformer\Transformer;
@@ -26,7 +27,7 @@ class SdkClassProcedureMaker
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function generate(): void
     {
@@ -48,6 +49,7 @@ class SdkClassProcedureMaker
                     ApiUrl::class,
                     AutoconfigureTag::class,
                     Transformer::class,
+                    ...$this->classDefinition->getMethodsUses()
                 ],
                 'response'=>'RpcResponse',
                 'interfaces' => [end($interface)],

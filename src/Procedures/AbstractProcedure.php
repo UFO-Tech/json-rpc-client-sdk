@@ -3,14 +3,24 @@
 namespace Ufo\RpcSdk\Procedures;
 
 
+use ReflectionClass;
+use ReflectionException;
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\Validator\Validation;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Throwable;
+use Ufo\RpcError\AbstractRpcErrorException;
 use Ufo\RpcObject\RpcRequest;
 use Ufo\RpcObject\RpcResponse;
+use Ufo\RpcObject\Rules\Validator\ConstraintsImposedException;
+use Ufo\RpcObject\Rules\Validator\RpcValidator;
 use Ufo\RpcObject\Transformer\ResponseCreator;
 use Ufo\RpcSdk\Exceptions\SdkException;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
-use \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
+
+use function json_encode;
+
 abstract class AbstractProcedure implements ISdkMethodClass
 {
     const DEFAULT_RPC_VERSION = '2.0';
@@ -37,7 +47,7 @@ abstract class AbstractProcedure implements ISdkMethodClass
     /**
      * @return RpcResponse
      * @throws SdkException
-     * @throws \ReflectionException
+     * @throws ReflectionException
      * @throws TransportExceptionInterface
      */
     protected function requestApi(): RpcResponse
@@ -45,7 +55,7 @@ abstract class AbstractProcedure implements ISdkMethodClass
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 2)[1];
         $function = $backtrace['function'];
         $args = $backtrace['args'];
-        $refClass = new \ReflectionClass(static::class);
+        $refClass = new ReflectionClass(static::class);
         $refMethod = $refClass->getMethod($function);
         $procedure = $refMethod->getAttributes(ApiMethod::class)[0]->newInstance();
         $body = [
@@ -56,11 +66,17 @@ abstract class AbstractProcedure implements ISdkMethodClass
 
         $apiUrl = $refClass->getAttributes(ApiUrl::class)[0]->newInstance();
 
+        $validator = new RpcValidator(Validation::createValidator());
         $addOptions = [];
         if (count($args) > 0) {
             foreach ($args as $i => $arg) {
                 $addOptions['params'][$refMethod->getParameters()[$i]->getName()] = $arg;
             }
+        }
+        try {
+            $validator->validateMethodParams($this, $function, $addOptions['params']);
+        } catch (ConstraintsImposedException $error) {
+            throw AbstractRpcErrorException::fromCode($error->getCode(), json_encode($error->getConstraintsImposed()));
         }
         $body += $addOptions;
 
@@ -84,7 +100,7 @@ abstract class AbstractProcedure implements ISdkMethodClass
             $response->throwError();
 
             return $response;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new SdkException($e->getMessage(), $e->getCode(), $e);
         }
     }

@@ -2,7 +2,9 @@
 
 namespace Ufo\RpcSdk\Procedures;
 
-#[\Attribute]
+use Attribute;
+
+#[Attribute]
 class ApiMethod
 {
 

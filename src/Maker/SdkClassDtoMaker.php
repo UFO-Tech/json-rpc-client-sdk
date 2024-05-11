@@ -2,6 +2,7 @@
 
 namespace Ufo\RpcSdk\Maker;
 
+use Exception;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Ufo\RpcObject\RpcResponse;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
@@ -24,7 +25,7 @@ class SdkClassDtoMaker
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function generate(): void
     {

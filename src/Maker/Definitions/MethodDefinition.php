@@ -2,6 +2,15 @@
 
 namespace Ufo\RpcSdk\Maker\Definitions;
 
+use function array_map;
+use function array_merge;
+use function array_unique;
+use function count;
+use function implode;
+use function str_pad;
+
+use const PHP_EOL;
+
 class MethodDefinition
 {
     /**
@@ -13,6 +22,8 @@ class MethodDefinition
     protected static array $typesExclude = [];
 
     protected string $returnsDoc;
+
+    protected array $uses = [];
 
     /**
      * @param string $name
@@ -47,27 +58,37 @@ class MethodDefinition
     }
 
     /**
+     * @param bool $withAttr
      * @return string
      */
-    public function getArgumentsSignature(): string
+    public function getArgumentsSignature(bool $withAttr = false): string
     {
         $args = [];
         foreach ($this->arguments as $name => $argument) {
-            $args[$name] = $argument->getType() . ' $' . $name;
+            $args[$name] = '';
+            if ($withAttr && count($argument->getAssertions()) > 0) {
+                $args[$name] .= PHP_EOL . $argument->getAssertions()->getSignature() . str_pad('', 8);
+                $this->uses[] = $argument->getAssertions()->getClass();
+                $this->uses = array_merge($this->uses, $argument->getAssertions()->getAssertionsClasses());
+            }
+            $args[$name] .= $argument->getType() . ' $' . $name;
             if ($argument->isOptional()) {
-                $value = match ($argument->getDefaultValue()) {
-                    null => 'null',
-                    '' => '""',
-                    [] => '[]',
-                    true => 'true',
-                    false => 'false',
-                    default => $argument->getDefaultValue()
-                };
+                $value = ParamToStringConverter::defaultValue($argument->getDefaultValue());
                 $args[$name] .= ' = ' . $value;
             }
         }
-        return implode(', ', $args);
+        $br = $withAttr ? PHP_EOL: '';
+        return implode(', ' . $br . str_pad('', 8) , $args) . $br . ($withAttr? str_pad('', 4) : '');
     }
+
+    /**
+     * @return array
+     */
+    public function getUses(): array
+    {
+        return array_unique($this->uses);
+    }
+
     public static function normalizeType(string $type): string
     {
         return self::$typesExclude[$type] ?? match ($type) {

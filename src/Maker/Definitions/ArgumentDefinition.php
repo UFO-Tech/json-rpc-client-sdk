@@ -2,25 +2,31 @@
 
 namespace Ufo\RpcSdk\Maker\Definitions;
 
+use Ufo\RpcError\WrongWayException;
 use Ufo\RpcSdk\Exceptions\SdkBuilderException;
 
 class ArgumentDefinition
 {
     protected string $type;
 
+    protected AssertionsDefinition $assertions;
+
     /**
      * @param string $name
      * @param string|array $type
      * @param bool $optional
      * @param mixed|null $defaultValue
+     * @param array $assertions
      */
     public function __construct(
         protected string $name,
         string|array $type,
         protected bool $optional,
-        protected mixed $defaultValue = null
+        protected mixed $defaultValue = null,
+        array $assertions = []
     )
     {
+        $this->assertions = new AssertionsDefinition();
         if (is_array($type)) {
             $type = array_map(function ($v) {
                 return MethodDefinition::normalizeType($v);
@@ -28,6 +34,12 @@ class ArgumentDefinition
             $this->type = implode('|', $type);
         } else {
             $this->type = MethodDefinition::normalizeType($type);
+        }
+        foreach ($assertions as $assertion) {
+            try {
+                $this->assertions->addAssertion(new AssertionDefinition($assertion['class'], $assertion['context'] ?? []));
+            } catch (WrongWayException) {
+            }
         }
     }
 
@@ -62,4 +74,13 @@ class ArgumentDefinition
     {
         return $this->defaultValue;
     }
+
+    /**
+     * @return AssertionsDefinition
+     */
+    public function getAssertions(): AssertionsDefinition
+    {
+        return $this->assertions;
+    }
+
 }
