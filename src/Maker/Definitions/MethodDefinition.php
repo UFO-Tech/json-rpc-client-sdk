@@ -21,7 +21,7 @@ class MethodDefinition
 
     protected static array $typesExclude = [];
 
-    protected string $returnsDoc;
+    protected ?string $returnsDoc = null;
 
     protected array $uses = [];
 
@@ -119,9 +119,9 @@ class MethodDefinition
     }
 
     /**
-     * @return string
+     * @return ?string
      */
-    public function getReturnsDoc(): string
+    public function getReturnsDoc(): ?string
     {
         return $this->returnsDoc;
     }
