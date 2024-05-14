@@ -26,3 +26,5 @@
 /sdk/
 /composer.lock
 /bin/test.php
+
+.phpunit.cache

@@ -16,6 +16,16 @@ services:
     networks:
       - net_tm
 
+  php-cli:
+    container_name: php_cli_${PROJECT_NAME}
+    build:
+      context: ./docker/configs/php-cli
+      dockerfile: Dockerfile
+    volumes:
+      - ./:${WORKDIR}
+    networks:
+      - net_tm
+
 networks:
   net_tm:
     name: tm-hub_net_tm
