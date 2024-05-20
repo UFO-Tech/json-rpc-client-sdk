@@ -21,6 +21,8 @@ services:
     build:
       context: ./docker/configs/php-cli
       dockerfile: Dockerfile
+      args:
+        WORKDIR: ${WORKDIR}
     volumes:
       - ./:${WORKDIR}
     networks:
@@ -28,5 +30,4 @@ services:
 
 networks:
   net_tm:
-    name: tm-hub_net_tm
     external: true
