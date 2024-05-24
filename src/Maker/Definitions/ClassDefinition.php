@@ -23,8 +23,13 @@ class ClassDefinition
     /**
      * @param string $namespace
      * @param string $className
+     * @param bool $async
      */
-    public function __construct(protected string $namespace, protected string $className)
+    public function __construct(
+        protected string $namespace,
+        protected string $className,
+        readonly public bool $async = false
+    )
     {
     }
 

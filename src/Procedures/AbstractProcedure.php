@@ -19,12 +19,15 @@ use Ufo\RpcSdk\Exceptions\SdkException;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
+use function count;
+use function debug_backtrace;
 use function json_encode;
+use function uniqid;
 
-abstract class AbstractProcedure implements ISdkMethodClass
+use const DEBUG_BACKTRACE_PROVIDE_OBJECT;
+
+abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMethodClass
 {
-    const DEFAULT_RPC_VERSION = '2.0';
-
     /**
      * @param array $headers ['header_key' => 'some_header_string_without_spaces']
      * @param string|int|null $requestId
@@ -34,13 +37,13 @@ abstract class AbstractProcedure implements ISdkMethodClass
      */
     public function __construct(
         protected array                $headers = [],
-        protected string|int|null      $requestId = null,
-        protected string               $rpcVersion = self::DEFAULT_RPC_VERSION,
+        string|int|null                $requestId = null,
+        string                         $rpcVersion = self::DEFAULT_RPC_VERSION,
         protected ?HttpClientInterface $httpClient = null,
-        array                          $httpRequestOptions = [],
+        array                          $httpRequestOptions = []
     )
     {
-        $this->requestId = $requestId ?? uniqid();
+        parent::__construct($requestId, $rpcVersion);
         $this->httpClient = $httpClient ?? HttpClient::create($httpRequestOptions);
     }
 
@@ -49,36 +52,12 @@ abstract class AbstractProcedure implements ISdkMethodClass
      * @throws SdkException
      * @throws ReflectionException
      * @throws TransportExceptionInterface
+     * @throws AbstractRpcErrorException
      */
     protected function requestApi(): RpcResponse
     {
-        $backtrace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 2)[1];
-        $function = $backtrace['function'];
-        $args = $backtrace['args'];
-        $refClass = new ReflectionClass(static::class);
-        $refMethod = $refClass->getMethod($function);
-        $procedure = $refMethod->getAttributes(ApiMethod::class)[0]->newInstance();
-        $body = [
-            'id' => $this->getRequestId(),
-            'jsonrpc' => $this->getRpcVersion(),
-            'method' => $procedure->getMethod(),
-        ];
-
-        $apiUrl = $refClass->getAttributes(ApiUrl::class)[0]->newInstance();
-
-        $validator = new RpcValidator(Validation::createValidator());
-        $addOptions = [];
-        if (count($args) > 0) {
-            foreach ($args as $i => $arg) {
-                $addOptions['params'][$refMethod->getParameters()[$i]->getName()] = $arg;
-            }
-        }
-        try {
-            $validator->validateMethodParams($this, $function, $addOptions['params']);
-        } catch (ConstraintsImposedException $error) {
-            throw AbstractRpcErrorException::fromCode($error->getCode(), json_encode($error->getConstraintsImposed()));
-        }
-        $body += $addOptions;
+        $apiMethodDef = $this->callApiMethodDef();
+        $apiUrl = $apiMethodDef->refClass->getAttributes(ApiUrl::class)[0]->newInstance();
 
         $headers = [];
         if (!empty($this->headers)) {
@@ -89,11 +68,11 @@ abstract class AbstractProcedure implements ISdkMethodClass
             $apiUrl->getMethod(),
             $apiUrl->getUrl(),
             [
-               'headers' => $headers,
-               'json' => $body
+                'headers' => $headers,
+                'json' => $apiMethodDef->body
             ]
         );
-        RequestResponseStack::addRequest(RpcRequest::fromArray($body), $headers);
+        RequestResponseStack::addRequest(RpcRequest::fromArray($apiMethodDef->body), $headers);
         try {
             $response = ResponseCreator::fromJson($request->getContent());
             RequestResponseStack::addResponse($response);
@@ -105,39 +84,5 @@ abstract class AbstractProcedure implements ISdkMethodClass
         }
     }
 
-    /**
-     * @return int|string
-     */
-    public function getRequestId(): int|string
-    {
-        return $this->requestId;
-    }
 
-    /**
-     * @param int|string $requestId
-     * @return $this
-     */
-    public function setRequestId(int|string $requestId): static
-    {
-        $this->requestId = $requestId;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getRpcVersion(): string
-    {
-        return $this->rpcVersion;
-    }
-
-    /**
-     * @param string $version
-     * @return $this
-     */
-    public function setRpcVersion(string $version): static
-    {
-        $this->rpcVersion = $version;
-        return $this;
-    }
 }

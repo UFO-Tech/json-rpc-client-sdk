@@ -3,35 +3,13 @@
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
 use Ufo\RpcSdk\Maker\Definitions\MethodDefinition;
 
-?>
-<?= '<?php' . PHP_EOL ?>
+echo '<?php' . PHP_EOL ?>
 /**
-* Auto generated DTO class for easy usage SDK for RPC API <?= $vendor['name'] . PHP_EOL ?>.
-* @link <?= $vendor['url'] . PHP_EOL ?>
-* Created at <?= date('d.m.Y H:i:s') . PHP_EOL ?>
-*
-* @category ufo-tech
-* @package json-rpc-client-sdk
-* @generated ufo-tech/json-rpc-client-sdk
-* @author Alex Maystrenko <ashterix69@gmail.com>
-* @see https://docs.ufo-tech.space/bin/view/docs/JsonRpcClientSdk Library documentation
-* @license https://github.com/ufo-tech/json-rpc-client-sdk/blob/main/LICENSE
+* Auto generated DTO class for easy usage SDK for RPC API <?= $vendor['name'] . PHP_EOL ?>
+<? require 'docs.php.twig';?>
 */
-namespace <?= $namespace ?>;
+<? require 'namespace.php.twig';?>
 
-<?php
-$class_name_full = $class_name;
-if (isset($extends) && !empty($extends)) {
-    $class_name_full .= ' extends ' . $extends;
-}
-if (isset($interfaces) && !empty($interfaces)) {
-    $class_name_full .= ' implements ' . implode(', ', $interfaces);
-}
-?>
-/**
-* RPC API <?= $vendor['name'] . PHP_EOL ?>
-* @link <?= $vendor['url'] . PHP_EOL ?>
-*/
 class <?= $class_name_full ?><?= PHP_EOL ?>
 {
 <?php

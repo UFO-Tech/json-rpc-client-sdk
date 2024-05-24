@@ -4,8 +4,8 @@ namespace Ufo\RpcSdk\Procedures;
 
 use Attribute;
 
-#[Attribute]
-class ApiUrl
+#[Attribute(Attribute::TARGET_CLASS)]
+final class ApiUrl
 {
 
     public function __construct(

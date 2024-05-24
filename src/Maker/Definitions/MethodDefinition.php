@@ -77,8 +77,11 @@ class MethodDefinition
                 $args[$name] .= ' = ' . $value;
             }
         }
-        $br = $withAttr ? PHP_EOL: '';
-        return implode(', ' . $br . str_pad('', 8) , $args) . $br . ($withAttr? str_pad('', 4) : '');
+        $br = $withAttr && count($args) > 1 ? PHP_EOL : '';
+
+        return implode(', '.$br.str_pad('', 8) , $args)
+               .$br
+               .($withAttr && count($args) > 1 ? str_pad('', 4) : '');
     }
 
     /**

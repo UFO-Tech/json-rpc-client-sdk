@@ -1,0 +1,21 @@
+namespace <?= $namespace ?>;
+
+<?php
+foreach ($uses as $use) {
+    echo 'use ' . $use . ';' . PHP_EOL;
+}
+?>
+<?php
+$class_name_full = $class_name;
+if (isset($extends) && !empty($extends)) {
+    $class_name_full .= ' extends ' . $extends;
+}
+if (isset($interfaces) && !empty($interfaces)) {
+    $class_name_full .= ' implements ' . implode(', ', $interfaces);
+}
+?>
+
+/**
+* RPC API <?= $vendor['name'] . PHP_EOL ?>
+* @link <?= $vendor['url'] . PHP_EOL ?>
+*/

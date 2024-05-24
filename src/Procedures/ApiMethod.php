@@ -4,20 +4,9 @@ namespace Ufo\RpcSdk\Procedures;
 
 use Attribute;
 
-#[Attribute]
-class ApiMethod
+#[Attribute(Attribute::TARGET_METHOD)]
+final readonly class ApiMethod
 {
 
-    public function __construct(protected string $method)
-    {
-    }
-
-    /**
-     * @return string
-     */
-    public function getMethod(): string
-    {
-        return $this->method;
-    }
-
+    public function __construct(public string $method) {}
 }

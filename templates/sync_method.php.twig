@@ -1,0 +1,27 @@
+<?= !empty($method->getReturns()) ? ': ' . implode('|', $method->getReturns()) : '' ?> <?= PHP_EOL ?>
+    {
+<?php
+if (!str_starts_with($method->getReturnsDoc(), 'DTO')) {
+?>
+        return $this->requestApi()->getResult();
+<?php
+} elseif (str_ends_with($method->getReturnsDoc(), '[]')) {
+$dto = str_replace('[]', '', $method->getReturnsDoc());
+?>
+        return array_map(
+            function($data) {
+                return Transformer::getDefault()->denormalize($data, <?=$dto?>::class);
+            },
+            $this->requestApi()->getResult()
+        );
+<?php
+} else {
+?>
+        return Transformer::getDefault()->denormalize(
+            $this->requestApi()->getResult(),
+            <?=$method->getReturnsDoc()?>::class
+        );
+<?php
+}
+?>
+    }

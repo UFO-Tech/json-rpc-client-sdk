@@ -19,14 +19,19 @@ use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Throwable;
+use Ufo\RpcError\WrongWayException;
+use Ufo\RpcObject\RpcTransport;
 use Ufo\RpcSdk\Exceptions\SdkBuilderException;
 use Ufo\RpcSdk\Maker\Definitions\ArgumentDefinition;
 use Ufo\RpcSdk\Maker\Definitions\ClassDefinition;
 use Ufo\RpcSdk\Maker\Definitions\MethodDefinition;
+use Ufo\RpcSdk\Maker\Definitions\MethodToClassnameConvertor;
 use Ufo\RpcSdk\Maker\Definitions\UfoEnvelope;
+use Ufo\RpcSdk\Procedures\AsyncTransport;
 
 use function is_array;
 use function preg_match;
+use function str_replace;
 
 class Maker
 {
@@ -150,6 +155,9 @@ class Maker
         foreach ($this->getRpcProcedures() as $procedureName => $procedureData) {
             $this->makeDto($procedureData);
             $this->classAddOrUpdate($procedureName, $procedureData);
+            if (!empty($this->getRpcTransport(true))) {
+                $this->classAddOrUpdate($procedureName, $procedureData, true);
+            }
         }
         foreach ($this->rpcProcedureClasses as $rpcProcedureClass) {
             $this->removePreviousClass($rpcProcedureClass->getFullName());
@@ -180,15 +188,17 @@ class Maker
     protected function generateDto(array &$procedureData): string
     {
         $procedureData['is_collection'] = false;
-        $format = $procedureData['responseFormat'];
+        $format = &$procedureData['responseFormat'];
         if (isset($format[0])) {
             $format = $format[0];
             $procedureData['is_collection'] = true;
         }
+        $dtoName = $format['$dto'] ?? null;
+        unset($format['$dto']);
         $className = $this->dtoStack[md5(serialize($format))] ?? null;
 
         if (is_null($className)) {
-            $className = SdkClassDtoMaker::generateName($procedureData['name']);
+            $className = $dtoName ?? SdkClassDtoMaker::generateName($procedureData['name']);
             $this->dtoStack[md5(serialize($format))] = $className;
 
             $class = new ClassDefinition(
@@ -227,30 +237,23 @@ class Maker
     /**
      * @param string $procedureName
      * @param array $procedureData
+     * @param bool $async
      * @return ClassDefinition
      */
-    protected function classAddOrUpdate(string $procedureName, array $procedureData): ClassDefinition
+    protected function classAddOrUpdate(string $procedureName, array $procedureData, bool $async = false):
+    ClassDefinition
     {
         $ns = $this->namespace;
         $ns .= '\\' . $this->apiVendorAlias;
 
-        $pMatch = [];
-        preg_match("/(\w+)(\W+)(\w+)/", $procedureName, $pMatch);
-
-        if (count($pMatch) === 0) {
-            $className = 'Main';
-            $apiMethod = $procedureName;
-        } else {
-            $className = Str::asCamelCase($pMatch[1]);
-            $apiMethod = $pMatch[3];
-        }
-        $method = new MethodDefinition($apiMethod, $procedureName);
+        $convertor = MethodToClassnameConvertor::convert($procedureName, $async);
+        $method = new MethodDefinition($convertor->apiMethod, $procedureName);
         $method->setReturns($procedureData['returns'], $procedureData['returnsDoc'] ?? null);
         try {
-            $class = $this->getClassByName($className);
+            $class = $this->getClassByName($convertor->className);
         } catch (SdkBuilderException) {
-            $class = new ClassDefinition($ns, $className);
-            $this->rpcProcedureClasses[$className] = $class;
+            $class = new ClassDefinition($ns, $convertor->className, $async);
+            $this->rpcProcedureClasses[$convertor->className] = $class;
         }
         $class->addMethod($method);
 
@@ -295,6 +298,20 @@ class Maker
     public function getApiVendorAlias(): ?string
     {
         return $this->apiVendorAlias;
+    }
+
+    public function getRpcTransport(bool $async = false): string
+    {
+        $type = $async ? 'async' : 'sync';
+        try {
+            return str_replace(
+                '{user}:{pass}',
+                AsyncTransport::PLACEHOLDER,
+                (string)RpcTransport::fromArray($this->rpcResponse['transport'][$type])
+            );
+        } catch (\Throwable) {
+            return '';
+        }
     }
 
 

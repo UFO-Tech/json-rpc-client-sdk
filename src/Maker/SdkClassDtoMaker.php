@@ -7,6 +7,7 @@ use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Ufo\RpcObject\RpcResponse;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
 use Ufo\RpcSdk\Maker\Definitions\ClassDefinition;
+use Ufo\RpcSdk\Maker\Definitions\MethodToClassnameConvertor;
 use Ufo\RpcSdk\Procedures\AbstractProcedure;
 use Ufo\RpcSdk\Procedures\ApiMethod;
 use Ufo\RpcSdk\Procedures\ApiUrl;
@@ -56,13 +57,9 @@ class SdkClassDtoMaker
 
     public static function generateName(string $procedure): string
     {
-        $procedureParts = explode('.', $procedure);
-        $name = str_replace('Procedure', '', $procedureParts[0]);
-
-        if (isset($procedureParts[1])) {
-            $name .= ucfirst($procedureParts[1]);
-        }
-
+        $convertor = MethodToClassnameConvertor::convert($procedure);
+        $name = $convertor->className;
+        $name .= ucfirst($convertor->apiMethod);
         return $name . "DTO";
     }
 

@@ -8,9 +8,11 @@ use Ufo\RpcObject\RpcResponse;
 use Ufo\RpcObject\Transformer\Transformer;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
 use Ufo\RpcSdk\Maker\Definitions\ClassDefinition;
+use Ufo\RpcSdk\Procedures\AbstractAsyncProcedure;
 use Ufo\RpcSdk\Procedures\AbstractProcedure;
 use Ufo\RpcSdk\Procedures\ApiMethod;
 use Ufo\RpcSdk\Procedures\ApiUrl;
+use Ufo\RpcSdk\Procedures\AsyncTransport;
 
 class SdkClassProcedureMaker
 {
@@ -42,10 +44,14 @@ class SdkClassProcedureMaker
                     'name' => $this->maker->getApiVendorAlias(),
                     'url' => $this->maker->getApiUrl(),
                 ],
+                'async' => $this->classDefinition->async,
+                'asyncTransport' => $this->maker->getRpcTransport(true),
                 'uses' => [
                     static::SDK_PROCEDURE_INTERFACE,
                     AbstractProcedure::class,
+                    AbstractAsyncProcedure::class,
                     ApiMethod::class,
+                    AsyncTransport::class,
                     ApiUrl::class,
                     AutoconfigureTag::class,
                     Transformer::class,
@@ -53,7 +59,7 @@ class SdkClassProcedureMaker
                 ],
                 'response'=>'RpcResponse',
                 'interfaces' => [end($interface)],
-                'extends' => 'AbstractProcedure',
+                'extends' =>  $this->classDefinition->async ? 'AbstractAsyncProcedure' : 'AbstractProcedure',
                 'methods' => $this->classDefinition->getMethods(),
                 'properties' => [],
                 'tab' => function (int $count = 1) {
