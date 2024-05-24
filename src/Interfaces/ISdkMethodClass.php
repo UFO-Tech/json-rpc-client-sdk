@@ -8,6 +8,7 @@ use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 interface ISdkMethodClass
 {
     const TAG = 'ufo.sdk_method_class';
+    const ASYNC_TAG = 'ufo.async_sdk_method_class';
     /**
      * @return int|string
      */

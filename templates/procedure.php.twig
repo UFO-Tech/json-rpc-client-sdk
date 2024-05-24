@@ -23,7 +23,7 @@ if ($async) {
 <?
 }
 ?>
-#[AutoconfigureTag('<?=ISdkMethodClass::TAG?>')]
+#[AutoconfigureTag('<?=$async ? ISdkMethodClass::ASYNC_TAG : ISdkMethodClass::TAG ?>')]
 class <?= $class_name_full ?><?= PHP_EOL ?>
 {
 <?php
