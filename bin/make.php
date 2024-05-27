@@ -7,8 +7,8 @@ use UfoCms\ColoredCli\CliColor;
 require_once __DIR__ . '/../vendor/autoload.php';
 
 echo CliColor::YELLOW->value;
-$vendorName = 'security';//readline('Enter API vendor name: ');
-$apiUrl = 'http://nginx/api';//readline('Enter the API url: ');
+$vendorName = readline('Enter API vendor name: ');
+$apiUrl = readline('Enter the API url: ');
 echo CliColor::RESET->value;
 
 try {
