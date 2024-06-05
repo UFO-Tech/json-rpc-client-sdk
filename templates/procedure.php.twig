@@ -8,9 +8,9 @@ use Ufo\RpcSdk\Maker\Definitions\MethodDefinition;
 <?= '<?php' . PHP_EOL ?>
 /**
 * Auto generated SDK class for easy usage RPC API <?= $vendor['name'] . PHP_EOL ?>
-<? require 'docs.php.twig';?>
+<?php require 'docs.php.twig';?>
 */
-<? require 'namespace.php.twig';?>
+<?php require 'namespace.php.twig';?>
 
 <?
 if ($async) {
@@ -53,7 +53,7 @@ if (!$async) {
     * @return <?= $returns . PHP_EOL ?>
     */
     #[ApiMethod('<?=$method->getApiProcedure() ?>')]
-    public function <?= $method->getName() ?>(<?= $argsAttr ?>)<? require ($async ? 'a':'') . 'sync_method.php.twig'; ?>
+    public function <?= $method->getName() ?>(<?= $argsAttr ?>)<?php require ($async ? 'a':'') . 'sync_method.php.twig'; ?>
 
 <?php
 }
