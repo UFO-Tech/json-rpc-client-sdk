@@ -68,7 +68,7 @@ abstract class AbstractBaseProcedure
             }
         }
         try {
-            $validator->validateMethodParams($this, $function, $addOptions['params']);
+            $validator->validateMethodParams($this, $function, $addOptions['params'] ?? []);
         } catch (ConstraintsImposedException $error) {
             throw AbstractRpcErrorException::fromCode($error->getCode(), json_encode($error->getConstraintsImposed()));
         }
