@@ -307,7 +307,7 @@ class Maker
             return str_replace(
                 '{user}:{pass}',
                 AsyncTransport::PLACEHOLDER,
-                (string)RpcTransport::fromArray($this->rpcResponse['transport'][$type])
+                (string)RpcTransport::fromArray($this->rpcResponse['transport'][$type] ?? [])
             );
         } catch (\Throwable) {
             return '';

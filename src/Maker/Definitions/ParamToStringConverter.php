@@ -17,7 +17,7 @@ class ParamToStringConverter
             [] => '[]',
             true => 'true',
             false => 'false',
-            default => (string)$defaultValue
+            default => static::convert($defaultValue)
         };
     }
 
