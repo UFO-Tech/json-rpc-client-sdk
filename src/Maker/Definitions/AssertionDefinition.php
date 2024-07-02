@@ -2,6 +2,7 @@
 
 namespace Ufo\RpcSdk\Maker\Definitions;
 
+use Symfony\Component\Validator\Constraints\Collection;
 use Symfony\Component\Validator\Constraints\Range;
 use Ufo\RpcError\WrongWayException;
 

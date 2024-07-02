@@ -55,6 +55,8 @@ class SdkClassProcedureMaker
                     ApiUrl::class,
                     AutoconfigureTag::class,
                     Transformer::class,
+                    'Symfony\Component\Validator\Constraints as Assert',
+
                     ...$this->classDefinition->getMethodsUses()
                 ],
                 'response'=>'RpcResponse',
