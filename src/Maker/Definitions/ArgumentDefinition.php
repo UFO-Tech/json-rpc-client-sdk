@@ -27,7 +27,7 @@ class ArgumentDefinition
         array $assertions = []
     )
     {
-        $this->assertions = new AssertionsDefinition($assertions['constructor']);
+        $this->assertions = new AssertionsDefinition($assertions['constructor'] ?? '');
         if (is_array($type)) {
             $type = array_map(function ($v) {
                 return MethodDefinition::normalizeType($v);
@@ -36,7 +36,7 @@ class ArgumentDefinition
         } else {
             $this->type = MethodDefinition::normalizeType($type);
         }
-        foreach ($assertions['payload'] as $assertion) {
+        foreach ($assertions['payload'] ?? [] as $assertion) {
             try {
                 $this->assertions->addAssertion(new AssertionDefinition($assertion['class'], $assertion['context'] ?? []));
             } catch (WrongWayException) {
