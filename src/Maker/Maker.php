@@ -153,6 +153,7 @@ class Maker
     public function make(?callable $callbackOutput = null): void
     {
         foreach ($this->getRpcProcedures() as $procedureName => $procedureData) {
+            if ($procedureName === 'ping') continue;
             $this->makeDto($procedureData);
             $this->classAddOrUpdate($procedureName, $procedureData);
             if (!empty($this->getRpcTransport(true))) {

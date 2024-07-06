@@ -4,17 +4,12 @@ namespace Ufo\RpcSdk\Procedures;
 
 use ReflectionClass;
 use ReflectionException;
-use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Validator\Validation;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Throwable;
 use Ufo\RpcError\AbstractRpcErrorException;
-use Ufo\RpcObject\RpcRequest;
 use Ufo\RpcObject\RpcResponse;
 use Ufo\RpcObject\Rules\Validator\ConstraintsImposedException;
 use Ufo\RpcObject\Rules\Validator\RpcValidator;
-use Ufo\RpcObject\Transformer\ResponseCreator;
 use Ufo\RpcSdk\Exceptions\SdkException;
 
 use function count;
@@ -116,5 +111,18 @@ abstract class AbstractBaseProcedure
     {
         $this->rpcVersion = $version;
         return $this;
+    }
+
+    /**
+     * @method 'ping'
+     * @return string
+     * @throws ReflectionException
+     * @throws SdkException
+     * @throws TransportExceptionInterface
+     */
+    #[ApiMethod('ping')]
+    public function ping(): string
+    {
+        return $this->requestApi()->getResult();
     }
 }
