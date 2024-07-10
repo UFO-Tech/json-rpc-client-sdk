@@ -1,4 +1,4 @@
-version: "3"
+version: "3.8"
 services:
   php:
     container_name: php_${PROJECT_NAME}
@@ -13,10 +13,11 @@ services:
       PHP_IDE_CONFIG: serverName=docker
     volumes:
       - ./:${WORKDIR}
+      - ./../rpc-objects:${WORKDIR}/../rpc-objects
     networks:
-      - net_tm
+      - tm
 
 networks:
-  net_tm:
-    name: tm-hub_net_tm
+  tm:
+    name: tm-hub_tm
     external: true

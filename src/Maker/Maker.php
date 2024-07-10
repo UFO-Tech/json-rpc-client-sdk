@@ -19,16 +19,22 @@ use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Throwable;
+use Ufo\RpcError\RpcDataNotFoundException;
 use Ufo\RpcError\WrongWayException;
+use Ufo\RpcObject\Helpers\TypeHintResolver;
 use Ufo\RpcObject\RpcTransport;
 use Ufo\RpcSdk\Exceptions\SdkBuilderException;
+use Ufo\RpcSdk\Exceptions\UnsupportedFormatDocumentationException;
 use Ufo\RpcSdk\Maker\Definitions\ArgumentDefinition;
 use Ufo\RpcSdk\Maker\Definitions\ClassDefinition;
+use Ufo\RpcSdk\Maker\Definitions\DtoClassDefinition;
 use Ufo\RpcSdk\Maker\Definitions\MethodDefinition;
 use Ufo\RpcSdk\Maker\Definitions\MethodToClassnameConvertor;
 use Ufo\RpcSdk\Maker\Definitions\UfoEnvelope;
 use Ufo\RpcSdk\Procedures\AsyncTransport;
 
+use function explode;
+use function in_array;
 use function is_array;
 use function preg_match;
 use function str_replace;
@@ -127,7 +133,7 @@ class Maker
                 return json_decode($request->getContent(), true);
             }
         );
-        $this->checkUfoEnvelop();
+        $this->supportVersions();
     }
 
     public function getRpcProcedures(): array
@@ -136,13 +142,30 @@ class Maker
 
     }
 
-    protected function checkUfoEnvelop(): void
+    /**
+     * @throws WrongWayException
+     */
+    public function getDtoSchema(string $name): array
     {
-        $env = $this->rpcResponse['envelope'] ?? '';
-        $matches = [];
-        if (preg_match('/UFO-RPC-(\d)/', $env, $matches)) {
-            $this->envelope = new UfoEnvelope((int)$matches[1]);
+        $components = $this->rpcResponse['components'] ?? [];
+        $schemas = $components['schemas'] ?? [];
+        return $schemas[$name] ?? throw new WrongWayException();
+    }
+
+    protected function supportVersions(): void
+    {
+        if (!isset($this->rpcResponse['openrpc'])
+            || !in_array($this->rpcResponse['openrpc'], UnsupportedFormatDocumentationException::SUPPORTED)) {
+            throw new UnsupportedFormatDocumentationException();
         }
+
+        try {
+            $env = $this->rpcResponse['servers'][0]['x-ufo']['envelop'] ?? '';
+            $matches = [];
+            if (preg_match('/UFO-RPC-(\d)/', $env, $matches)) {
+                $this->envelope = new UfoEnvelope((int)$matches[1]);
+            }
+        } catch (\Throwable) {}
     }
 
     /**
@@ -152,9 +175,14 @@ class Maker
      */
     public function make(?callable $callbackOutput = null): void
     {
-        foreach ($this->getRpcProcedures() as $procedureName => $procedureData) {
+        foreach ($this->getRpcProcedures() as $procedureData) {
+            $procedureName = $procedureData['name'];
             if ($procedureName === 'ping') continue;
-            $this->makeDto($procedureData);
+
+            try {
+                $this->makeDto($procedureData);
+            } catch (RpcDataNotFoundException) {}
+
             $this->classAddOrUpdate($procedureName, $procedureData);
             if (!empty($this->getRpcTransport(true))) {
                 $this->classAddOrUpdate($procedureName, $procedureData, true);
@@ -172,42 +200,42 @@ class Maker
 
     protected function makeDto(array &$procedureData): void
     {
-        if ($this->envelope && is_array($procedureData['responseFormat']) && !empty($procedureData['responseFormat'])) {
-            $dto = $this->generateDto($procedureData);
+        $collection = false;
+        try {
+            $ref = DocHelper::getPath($procedureData['result']['schema'], '$ref');
+        } catch (RpcDataNotFoundException) {
+            $ref = DocHelper::getPath($procedureData['result']['schema'], 'items.$ref');
+            $collection = true;
+        }
+        $p = explode('/', $ref);
+        $dtoName = end($p);
 
-            if ($procedureData['returns'] === 'object'
-                || ($procedureData['returns'] === 'array' && $procedureData['is_collection'] === false)
-            ) {
-                MethodDefinition::addTypeExclude('DTO\\' . $dto);
-                $procedureData['returns'] = 'DTO\\' . $dto;
-            } else {
-                $procedureData['returnsDoc'] = 'DTO\\' . $dto . '[]';
-            }
+        $dto = $this->generateDto($dtoName, $procedureData, $ref);
+
+        if (!$collection) {
+            MethodDefinition::addTypeExclude('DTO\\' . $dto);
+            $procedureData['returns'] = 'DTO\\' . $dto;
+        } else {
+            $procedureData['returns'] = 'array';
+            $procedureData['returnsDoc'] = 'DTO\\' . $dto . '[]';
         }
     }
 
-    protected function generateDto(array &$procedureData): string
+    protected function generateDto(string $dtoName, array &$procedureData): string
     {
-        $procedureData['is_collection'] = false;
-        $format = &$procedureData['responseFormat'];
-        if (isset($format[0])) {
-            $format = $format[0];
-            $procedureData['is_collection'] = true;
-        }
-        $dtoName = $format['$dto'] ?? null;
-        unset($format['$dto']);
-        $className = $this->dtoStack[md5(serialize($format))] ?? null;
+        $className = $this->dtoStack[$dtoName] ?? null;
 
         if (is_null($className)) {
-            $className = $dtoName ?? SdkClassDtoMaker::generateName($procedureData['name']);
-            $this->dtoStack[md5(serialize($format))] = $className;
+            $className = ClassDefinition::toUpperCamelCase($dtoName);
+            $this->dtoStack[$dtoName] = $className;
 
-            $class = new ClassDefinition(
+            $class = new DtoClassDefinition(
                 $this->namespace . '\\' . $this->apiVendorAlias . '\\DTO',
                 $className
             );
             $this->removePreviousClass($class->getFullName());
-            $class->setProperties($procedureData['responseFormat']);
+            $dtoSchema = $this->getDtoSchema($dtoName);
+            $class->setProperties($dtoSchema['properties'] ?? []);
             $creator = new SdkClassDtoMaker($this, $class);
             $creator->generate();
         }
@@ -249,7 +277,8 @@ class Maker
 
         $convertor = MethodToClassnameConvertor::convert($procedureName, $async);
         $method = new MethodDefinition($convertor->apiMethod, $procedureName);
-        $method->setReturns($procedureData['returns'], $procedureData['returnsDoc'] ?? null);
+        $returns = $procedureData['returns'] ?? DocHelper::getPath($procedureData, 'result.schema.type');
+        $method->setReturns($returns, $procedureData['returnsDoc'] ?? null);
         try {
             $class = $this->getClassByName($convertor->className);
         } catch (SdkBuilderException) {
@@ -258,14 +287,24 @@ class Maker
         }
         $class->addMethod($method);
 
-        $assertions = $procedureData['symfony_assertions'] ?? [];
-        foreach ($procedureData['parameters'] as $data) {
+        foreach ($procedureData['params'] as $data) {
+            $assertions = $data['x-ufo-assertions'] ?? null;
+            $type = 'mixed';
+            $default = null;
+            try {
+                $type = TypeHintResolver::jsonSchemaToPhp($data['schema'] ?? DocHelper::getPath($data, 'schema'));
+            } catch (\Throwable $e) {
+            }
+            try {
+                $default = DocHelper::getPath($data, 'schema.default');
+            } catch (RpcDataNotFoundException) {}
+
             $argument = new ArgumentDefinition(
                 $data['name'],
-                $data['type'],
-                $data['optional'],
-                $data['default'] ?? null,
-                $assertions[$data['name']] ?? []
+                $type,
+                !$data['required'],
+                $default,
+                $assertions
             );
             $method->addArgument($argument);
         }

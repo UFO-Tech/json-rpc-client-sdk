@@ -29,9 +29,7 @@ class ClassDefinition
         protected string $namespace,
         protected string $className,
         readonly public bool $async = false
-    )
-    {
-    }
+    ) {}
 
     /**
      * @return MethodDefinition[]
@@ -98,4 +96,12 @@ class ClassDefinition
     {
         return $this->getNamespace() . '\\' . $this->getClassName();
     }
+
+    public static function toUpperCamelCase($string): string
+    {
+        $words = preg_split('/[\s_\-]+/', $string);
+        $upperCamelCase = array_map('ucfirst', $words);
+        return implode('', $upperCamelCase);
+    }
+
 }

@@ -7,41 +7,24 @@ use Ufo\RpcSdk\Exceptions\SdkBuilderException;
 
 class ArgumentDefinition
 {
-    protected string $type;
-
     protected AssertionsDefinition $assertions;
 
     /**
      * @param string $name
-     * @param string|array $type
+     * @param string $type
      * @param bool $optional
      * @param mixed|null $defaultValue
-     * @param array $assertions
-     * @throws WrongWayException
+     * @param ?string $assertions
      */
     public function __construct(
         protected string $name,
-        string|array $type,
+        protected string $type,
         protected bool $optional,
         protected mixed $defaultValue = null,
-        array $assertions = []
+        ?string $assertions = null
     )
     {
-        $this->assertions = new AssertionsDefinition($assertions['constructor'] ?? '');
-        if (is_array($type)) {
-            $type = array_map(function ($v) {
-                return MethodDefinition::normalizeType($v);
-            }, $type);
-            $this->type = implode('|', $type);
-        } else {
-            $this->type = MethodDefinition::normalizeType($type);
-        }
-        foreach ($assertions['payload'] ?? [] as $assertion) {
-            try {
-                $this->assertions->addAssertion(new AssertionDefinition($assertion['class'], $assertion['context'] ?? []));
-            } catch (WrongWayException) {
-            }
-        }
+        $this->assertions = new AssertionsDefinition($assertions ?? '');
     }
 
     /**

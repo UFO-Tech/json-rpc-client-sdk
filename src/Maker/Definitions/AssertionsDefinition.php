@@ -17,10 +17,6 @@ use const PHP_EOL;
 class AssertionsDefinition extends AttributeDefinition implements Countable
 {
     /**
-     * @var AssertionDefinition[]
-     */
-    protected array $assertions = [];
-    /**
      * @throws WrongWayException
      */
     public function __construct(protected ?string $constructorArgs = null)
@@ -28,41 +24,35 @@ class AssertionsDefinition extends AttributeDefinition implements Countable
         parent::__construct(Assertions::class);
     }
 
-    /**
-     * @return string
-     */
-    public function getConstructorArgs(): string
+    protected function buildSignature(int $tab = 2): array
     {
-        return $this->constructorArgs;
-    }
-
-    public function addAssertion(AssertionDefinition $assertion): static
-    {
-        $this->assertions[$assertion->getClass()] = $assertion;
-
-        return $this;
-    }
-
-    protected function buildSignature(): array
-    {
-        $specific = [];
-        foreach ($this->assertions as $assertion) {
-            $specific[] = $assertion->getSignature();
-        }
+        $res = [];
         if (!is_null($this->constructorArgs)) {
-            return ['[' . $this->constructorArgs . ']'];
+            $res =  [
+                '['
+                 . PHP_EOL
+                 . str_pad(' ', $tab * 4)
+                 . $this->constructorArgs
+                 . PHP_EOL
+                 . str_pad(' ', ($tab - 1) * 4)
+                 . ']'
+            ];
         }
-        return ['[' . PHP_EOL . implode(', ' . PHP_EOL, $specific) . PHP_EOL . str_pad(' ', 8) . ']'];
+        return $res;
     }
 
-    public function getAssertionsClasses(): array
+    public function getSignature(int $tab = 2): string
     {
-        return array_keys($this->assertions);
+        $res = '';
+        if ($this->constructorArgs) {
+            $res = parent::getSignature($tab);
+        }
+        return $res;
     }
 
     public function count(): int
     {
-        return count($this->assertions);
+        return is_null($this->constructorArgs) ? 0 : 1;
     }
 
 }

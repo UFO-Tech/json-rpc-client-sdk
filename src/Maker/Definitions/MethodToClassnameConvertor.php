@@ -30,6 +30,6 @@ final readonly class MethodToClassnameConvertor
             $apiMethod = $pMatch[3];
             $separator = $pMatch[2];
         }
-        return new self($className, $apiMethod, $separator);
+        return new self($className . 'SDK', $apiMethod, $separator);
     }
 }

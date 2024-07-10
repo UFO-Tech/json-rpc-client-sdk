@@ -35,7 +35,7 @@ abstract class AttributeDefinition
         return $this->class;
     }
 
-    abstract protected function buildSignature(): array;
+    abstract protected function buildSignature(int $tab = 2): array;
 
     public function getSignature(int $tab = 2): string
     {
@@ -43,7 +43,7 @@ abstract class AttributeDefinition
         $signature .= '#[';
         $signature .= $this->getShortClassname();
 
-        $specific = $this->buildSignature();
+        $specific = $this->buildSignature($tab + 1);
         $signature .= count($specific) > 0 ? '(' : '';
         $signature .= implode(', ', $specific);
         $signature .= count($specific) > 0 ? ')' : '';

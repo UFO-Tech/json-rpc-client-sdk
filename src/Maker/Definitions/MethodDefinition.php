@@ -67,9 +67,9 @@ class MethodDefinition
         foreach ($this->arguments as $name => $argument) {
             $args[$name] = '';
             if ($withAttr && count($argument->getAssertions()) > 0) {
+
                 $args[$name] .= PHP_EOL . $argument->getAssertions()->getSignature() . str_pad('', 8);
                 $this->uses[] = $argument->getAssertions()->getClass();
-                $this->uses = array_merge($this->uses, $argument->getAssertions()->getAssertionsClasses());
             }
             $args[$name] .= $argument->getType() . ' $' . $name;
             if ($argument->isOptional()) {
