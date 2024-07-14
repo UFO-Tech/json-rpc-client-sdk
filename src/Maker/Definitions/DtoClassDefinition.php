@@ -58,7 +58,7 @@ class DtoClassDefinition extends ClassDefinition
                 $propertyTypes = [];
                 $docTypes = [];
                 foreach ($schema['oneOf'] as $type) {
-                    if ($type['$ref']) {
+                    if ($type['$ref'] ?? false) {
                         $parts = explode('/', $type['$ref']);
                         $realType = end($parts);
                     } else {

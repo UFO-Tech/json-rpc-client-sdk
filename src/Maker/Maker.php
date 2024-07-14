@@ -242,13 +242,6 @@ class Maker
             );
             $this->removePreviousClass($class->getFullName());
             $dtoSchema = $this->getDtoSchema($dtoName);
-            $dtoProperties = $dtoSchema['properties'] ?? [];
-            foreach ($dtoProperties as $name => $dtoProperty) {
-                if (isset($dtoProperty['$ref'])) {
-                    $ref = $dtoProperty['$ref'];
-                }
-            }
-
             $class->setProperties($dtoSchema['properties'] ?? []);
             $creator = new SdkClassDtoMaker($this, $class);
             $creator->generate();
