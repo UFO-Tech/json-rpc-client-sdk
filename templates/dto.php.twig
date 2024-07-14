@@ -15,6 +15,7 @@ class <?= $class_name_full ?><?= PHP_EOL ?>
 <?php
 foreach ($properties as $name => $type) {
 ?>
+<?= ($propertiesDocs[$name] ?? false) ? PHP_EOL . "    /** @var " . $propertiesDocs[$name] . " */" . PHP_EOL : ''; ?>
     public <?=$type?> $<?=$name?>;
 <?php
 }

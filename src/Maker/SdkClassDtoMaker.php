@@ -7,6 +7,7 @@ use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Ufo\RpcObject\RpcResponse;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
 use Ufo\RpcSdk\Maker\Definitions\ClassDefinition;
+use Ufo\RpcSdk\Maker\Definitions\DtoClassDefinition;
 use Ufo\RpcSdk\Maker\Definitions\MethodToClassnameConvertor;
 use Ufo\RpcSdk\Procedures\AbstractProcedure;
 use Ufo\RpcSdk\Procedures\ApiMethod;
@@ -20,7 +21,7 @@ class SdkClassDtoMaker
 
     public function __construct(
         protected Maker  $maker,
-        protected ClassDefinition $classDefinition
+        protected DtoClassDefinition $classDefinition
     )
     {
     }
@@ -45,6 +46,7 @@ class SdkClassDtoMaker
                 'interfaces' => [],
                 'extends' => '',
                 'methods' => $this->classDefinition->getMethods(),
+                'propertiesDocs' => $this->classDefinition->getDocs(),
                 'properties' => $this->classDefinition->getProperties(),
                 'tab' => function (int $count = 1) {
                     return str_repeat(' ', 4 * $count);

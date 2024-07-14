@@ -12,7 +12,6 @@ use Symfony\Bundle\MakerBundle\Util\AutoloaderUtil;
 use Symfony\Bundle\MakerBundle\Util\ComposerAutoloaderFinder;
 use Symfony\Bundle\MakerBundle\Util\MakerFileLinkFormatter;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
-use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
 use Symfony\Component\Cache\Exception\CacheException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpClient\HttpClient;
@@ -33,9 +32,9 @@ use Ufo\RpcSdk\Maker\Definitions\MethodToClassnameConvertor;
 use Ufo\RpcSdk\Maker\Definitions\UfoEnvelope;
 use Ufo\RpcSdk\Procedures\AsyncTransport;
 
+use function count;
 use function explode;
 use function in_array;
-use function is_array;
 use function preg_match;
 use function str_replace;
 
@@ -196,6 +195,14 @@ class Maker
                 $callbackOutput($rpcProcedureClass);
             }
         }
+        $schemas = $this->rpcResponse['components'] ?? [];
+        $schemas = $schemas['schemas'] ?? [];
+        if (count($this->dtoStack) < count($schemas)) {
+            foreach ($schemas as $dtoName => $schema) {
+                if (isset($this->dtoStack[$dtoName])) continue;
+                $this->generateDto($dtoName);
+            }
+        }
     }
 
     protected function makeDto(array &$procedureData): void
@@ -210,7 +217,7 @@ class Maker
         $p = explode('/', $ref);
         $dtoName = end($p);
 
-        $dto = $this->generateDto($dtoName, $procedureData, $ref);
+        $dto = $this->generateDto($dtoName);
 
         if (!$collection) {
             MethodDefinition::addTypeExclude('DTO\\' . $dto);
@@ -221,7 +228,7 @@ class Maker
         }
     }
 
-    protected function generateDto(string $dtoName, array &$procedureData): string
+    protected function generateDto(string $dtoName): string
     {
         $className = $this->dtoStack[$dtoName] ?? null;
 
@@ -235,6 +242,13 @@ class Maker
             );
             $this->removePreviousClass($class->getFullName());
             $dtoSchema = $this->getDtoSchema($dtoName);
+            $dtoProperties = $dtoSchema['properties'] ?? [];
+            foreach ($dtoProperties as $name => $dtoProperty) {
+                if (isset($dtoProperty['$ref'])) {
+                    $ref = $dtoProperty['$ref'];
+                }
+            }
+
             $class->setProperties($dtoSchema['properties'] ?? []);
             $creator = new SdkClassDtoMaker($this, $class);
             $creator->generate();
@@ -293,8 +307,7 @@ class Maker
             $default = null;
             try {
                 $type = TypeHintResolver::jsonSchemaToPhp($data['schema'] ?? DocHelper::getPath($data, 'schema'));
-            } catch (\Throwable $e) {
-            }
+            } catch (\Throwable $e) {}
             try {
                 $default = DocHelper::getPath($data, 'schema.default');
             } catch (RpcDataNotFoundException) {}

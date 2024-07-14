@@ -10,7 +10,10 @@ use function implode;
 class UnsupportedFormatDocumentationException extends \Exception
 {
     const array SUPPORTED = [
-        "1.2.6"
+        "1.3.2",
+        "1.3.1",
+        "1.3.0",
+        "1.2.6",
     ];
 
     protected const string MSG = 'Unsupported documentation format. Supported OpenRpc only versions: ';
