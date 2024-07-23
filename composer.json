@@ -18,7 +18,7 @@
         "symfony/cache": ">=6.4",
         "symfony/maker-bundle": "^1.48",
         "symfony/http-client": ">=6.4",
-        "ufo-tech/rpc-objects": "^2.5",
+        "ufo-tech/rpc-objects": ">=2.6.0",
         "ufo-tech/rpc-exceptions": ">=1.0.0",
         "ext-readline": "*",
         "ufo-cms/colored_cli": "^1.0",

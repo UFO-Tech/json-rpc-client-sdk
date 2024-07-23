@@ -11,6 +11,7 @@ use Ufo\RpcObject\RpcResponse;
 use Ufo\RpcObject\Rules\Validator\ConstraintsImposedException;
 use Ufo\RpcObject\Rules\Validator\RpcValidator;
 use Ufo\RpcSdk\Exceptions\SdkException;
+use Ufo\RpcObject\RPC;
 
 use function count;
 use function debug_backtrace;
@@ -80,6 +81,7 @@ abstract class AbstractBaseProcedure
     /**
      * @return int|string
      */
+    #[RPC\IgnoreApi]
     public function getRequestId(): int|string
     {
         return $this->requestId;
@@ -89,6 +91,7 @@ abstract class AbstractBaseProcedure
      * @param int|string $requestId
      * @return $this
      */
+    #[RPC\IgnoreApi]
     public function setRequestId(int|string $requestId): static
     {
         $this->requestId = $requestId;
@@ -98,6 +101,7 @@ abstract class AbstractBaseProcedure
     /**
      * @return string
      */
+    #[RPC\IgnoreApi]
     public function getRpcVersion(): string
     {
         return $this->rpcVersion;
@@ -107,6 +111,7 @@ abstract class AbstractBaseProcedure
      * @param string $version
      * @return $this
      */
+    #[RPC\IgnoreApi]
     public function setRpcVersion(string $version): static
     {
         $this->rpcVersion = $version;
@@ -121,6 +126,7 @@ abstract class AbstractBaseProcedure
      * @throws TransportExceptionInterface
      */
     #[ApiMethod('ping')]
+    #[RPC\IgnoreApi]
     public function ping(): string
     {
         return $this->requestApi()->getResult();
