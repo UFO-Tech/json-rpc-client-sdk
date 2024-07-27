@@ -15,16 +15,14 @@ use Ufo\RpcSdk\Procedures\ApiUrl;
 
 class SdkClassDtoMaker
 {
-    const DEFAULT_TEMPLATE = __DIR__ . '/../../templates/dto.php.twig';
+    const string DEFAULT_TEMPLATE = __DIR__.'/../../templates/dto.php.twig';
 
     protected string $template = self::DEFAULT_TEMPLATE;
 
     public function __construct(
         protected Maker  $maker,
         protected DtoClassDefinition $classDefinition
-    )
-    {
-    }
+    ) {}
 
     /**
      * @throws Exception

@@ -16,17 +16,16 @@ use Ufo\RpcSdk\Procedures\AsyncTransport;
 
 class SdkClassProcedureMaker
 {
-    const SDK_PROCEDURE_INTERFACE = ISdkMethodClass::class;
-    const DEFAULT_TEMPLATE = __DIR__ . '/../../templates/procedure.php.twig';
+    const string SDK_PROCEDURE_INTERFACE = ISdkMethodClass::class;
+    const string DEFAULT_TEMPLATE = __DIR__.'/../../templates/procedure.php.twig';
 
     protected string $template = self::DEFAULT_TEMPLATE;
 
     public function __construct(
         protected Maker  $maker,
-        protected ClassDefinition $classDefinition
-    )
-    {
-    }
+        protected ClassDefinition $classDefinition,
+        protected bool $apiUrlInAttr = true
+    ) {}
 
     /**
      * @throws Exception
@@ -46,6 +45,7 @@ class SdkClassProcedureMaker
                 ],
                 'async' => $this->classDefinition->async,
                 'asyncTransport' => $this->maker->getRpcTransport(true),
+                'apiUrlInAttr' => $this->apiUrlInAttr,
                 'uses' => [
                     static::SDK_PROCEDURE_INTERFACE,
                     AbstractProcedure::class,

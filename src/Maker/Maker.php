@@ -40,8 +40,8 @@ use function str_replace;
 
 class Maker
 {
-    const DEFAULT_NAMESPACE = 'Ufo\RpcSdk\Client';
-    const DEFAULT_CACHE_LIFETIME = 3600;
+    const string DEFAULT_NAMESPACE = 'Ufo\RpcSdk\Client';
+    const int DEFAULT_CACHE_LIFETIME = 3600;
 
     protected Generator $generator;
     protected array $rpcResponse;
@@ -59,10 +59,11 @@ class Maker
         protected string  $apiUrl,
         protected ?string $apiVendorAlias = null,
         protected array   $headers = [],
-        protected string  $namespace = self::DEFAULT_NAMESPACE,
+        readonly public string  $namespace = self::DEFAULT_NAMESPACE,
         protected ?string $projectRootDir = null,
         protected int     $cacheLifeTimeSecond = self::DEFAULT_CACHE_LIFETIME,
-        protected ?CacheInterface $cache = null
+        protected ?CacheInterface $cache = null,
+        protected bool $urlInAttr = true
     )
     {
         $this->projectRootDir = $projectRootDir ?? getcwd();
@@ -72,6 +73,11 @@ class Maker
         }
         $this->apiVendorAlias = Str::asCamelCase($apiVendorAlias);
         $this->init();
+    }
+
+    public function getProjectRootDir(): ?string
+    {
+        return $this->projectRootDir;
     }
 
     /**
@@ -112,11 +118,10 @@ class Maker
     /**
      * @return void
      * @throws InvalidArgumentException
-     * @throws CacheException
+     * @throws CacheException|UnsupportedFormatDocumentationException
      */
     protected function getApiRpcDoc(): void
     {
-
         $apiUrl = $this->apiUrl;
         $headers = [
             'headers' => $this->headers,
@@ -189,7 +194,7 @@ class Maker
         }
         foreach ($this->rpcProcedureClasses as $rpcProcedureClass) {
             $this->removePreviousClass($rpcProcedureClass->getFullName());
-            $creator = new SdkClassProcedureMaker($this, $rpcProcedureClass);
+            $creator = new SdkClassProcedureMaker($this, $rpcProcedureClass, $this->urlInAttr);
             $creator->generate();
             if (!is_null($callbackOutput)) {
                 $callbackOutput($rpcProcedureClass);
@@ -203,6 +208,7 @@ class Maker
                 $this->generateDto($dtoName);
             }
         }
+        (new SdkConfigMaker($this))->generate();
     }
 
     protected function makeDto(array &$procedureData): void

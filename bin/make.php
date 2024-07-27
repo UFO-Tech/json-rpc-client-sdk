@@ -7,12 +7,9 @@ use UfoCms\ColoredCli\CliColor;
 require_once __DIR__ . '/../vendor/autoload.php';
 
 echo CliColor::YELLOW->value;
-//$vendorName = readline('Enter API vendor name: ');
-//$apiUrl = readline('Enter the API url: ');
-$vendorName = 'user';
-$apiUrl = 'https://dev.scheduler.trademaster.in.ua/api';
-$apiUrl = 'http://nginx_hub/api';
-$apiUrl = 'http://nginx_u/api';
+$vendorName = readline('Enter API vendor name: ');
+$apiUrl = readline('Enter the API url: ');
+
 echo CliColor::RESET->value;
 
 try {
@@ -21,7 +18,8 @@ try {
         apiVendorAlias: $vendorName,
         namespace: Maker::DEFAULT_NAMESPACE, // 'Ufo\RpcSdk\Client'
         projectRootDir: getcwd(), // project_dir
-        cacheLifeTimeSecond: Maker::DEFAULT_CACHE_LIFETIME // 3600
+        cacheLifeTimeSecond: Maker::DEFAULT_CACHE_LIFETIME, // 3600
+        urlInAttr: false
     );
 
     echo CliColor::GREEN->value . "Start generate SDK for '$vendorName' ($apiUrl)" . CliColor::RESET->value . PHP_EOL;

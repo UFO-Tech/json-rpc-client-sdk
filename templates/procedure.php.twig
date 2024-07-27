@@ -17,7 +17,7 @@ if ($async) {
 ?>
 #[AsyncTransport('<?=$asyncTransport ?>')]
 <?
-} else {
+} elseif ($apiUrlInAttr) {
 ?>
 #[ApiUrl('<?=$vendor['url'] ?>')]
 <?

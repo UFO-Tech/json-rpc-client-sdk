@@ -15,19 +15,25 @@ use Ufo\RpcObject\RpcResponse;
 use Ufo\RpcObject\Rules\Validator\ConstraintsImposedException;
 use Ufo\RpcObject\Rules\Validator\RpcValidator;
 use Ufo\RpcObject\Transformer\ResponseCreator;
+use Ufo\RpcSdk\Exceptions\ConfigNotFoundException;
 use Ufo\RpcSdk\Exceptions\SdkException;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
 use function count;
 use function debug_backtrace;
+use function end;
+use function explode;
 use function json_encode;
+use function pathinfo;
 use function uniqid;
 
 use const DEBUG_BACKTRACE_PROVIDE_OBJECT;
 
 abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMethodClass
 {
+    protected ?SdkConfigs $sdkConfigs = null;
+
     /**
      * @param array $headers ['header_key' => 'some_header_string_without_spaces']
      * @param string|int|null $requestId
@@ -57,7 +63,16 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
     protected function requestApi(): RpcResponse
     {
         $apiMethodDef = $this->callApiMethodDef();
-        $apiUrl = $apiMethodDef->refClass->getAttributes(ApiUrl::class)[0]->newInstance();
+        if (!$this->sdkConfigs) {
+            $this->sdkConfigs = new SdkConfigs(pathinfo($apiMethodDef->refClass->getFileName())['dirname'] . '/..');
+        }
+        try {
+            $attr = ($apiMethodDef->refClass->getAttributes(ApiUrl::class) ?? [])[0] ?? null;
+            $apiUrl = $attr?->newInstance() ?? throw new ConfigNotFoundException();
+        } catch (ConfigNotFoundException) {
+            $nsParts = explode('\\', $apiMethodDef->refClass->getNamespaceName());
+            $apiUrl = $this->sdkConfigs->getApiUrl(end($nsParts));
+        }
 
         $headers = [];
         if (!empty($this->headers)) {
