@@ -71,7 +71,7 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
             $apiUrl = $attr?->newInstance() ?? throw new ConfigNotFoundException();
         } catch (ConfigNotFoundException) {
             $nsParts = explode('\\', $apiMethodDef->refClass->getNamespaceName());
-            $apiUrl = $this->sdkConfigs->getApiUrl(end($nsParts));
+            $apiUrl = new ApiUrl($this->sdkConfigs->getApiUrl(end($nsParts)));
         }
 
         $headers = [];
