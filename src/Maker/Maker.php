@@ -33,6 +33,7 @@ use Ufo\RpcSdk\Maker\Definitions\UfoEnvelope;
 use Ufo\RpcSdk\Procedures\AsyncTransport;
 
 use function count;
+use function current;
 use function explode;
 use function in_array;
 use function preg_match;
@@ -359,7 +360,9 @@ class Maker
             return str_replace(
                 '{user}:{pass}',
                 AsyncTransport::PLACEHOLDER,
-                (string)RpcTransport::fromArray($this->rpcResponse['transport'][$type] ?? [])
+                (string)RpcTransport::fromArray(
+                    current($this->rpcResponse['servers'])['x-ufo']['transport'][$type] ?? []
+                )
             );
         } catch (\Throwable) {
             return '';
