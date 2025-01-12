@@ -27,17 +27,23 @@ use Ufo\RpcSdk\Exceptions\UnsupportedFormatDocumentationException;
 use Ufo\RpcSdk\Maker\Definitions\ArgumentDefinition;
 use Ufo\RpcSdk\Maker\Definitions\ClassDefinition;
 use Ufo\RpcSdk\Maker\Definitions\DtoClassDefinition;
+use Ufo\RpcSdk\Maker\Definitions\EnumDefinition;
 use Ufo\RpcSdk\Maker\Definitions\MethodDefinition;
 use Ufo\RpcSdk\Maker\Definitions\MethodToClassnameConvertor;
+use Ufo\RpcSdk\Maker\Definitions\ParamToStringConverter;
 use Ufo\RpcSdk\Maker\Definitions\UfoEnvelope;
 use Ufo\RpcSdk\Procedures\AsyncTransport;
 
 use function count;
 use function current;
 use function explode;
+use function implode;
 use function in_array;
+use function md5;
 use function preg_match;
+use function preg_replace;
 use function str_replace;
+use function ucfirst;
 
 class Maker
 {
@@ -48,6 +54,11 @@ class Maker
     protected array $rpcResponse;
 
     protected array $dtoStack = [];
+
+    /**
+     * @var EnumDefinition[]
+     */
+    protected array $enumStack = [];
 
     protected ?UfoEnvelope $envelope = null;
 
@@ -209,6 +220,10 @@ class Maker
                 $this->generateDto($dtoName);
             }
         }
+        try {
+            $this->generateEnums();
+        } catch (RpcDataNotFoundException) {}
+
         (new SdkConfigMaker($this))->generate();
     }
 
@@ -232,6 +247,18 @@ class Maker
         } else {
             $procedureData['returns'] = 'array';
             $procedureData['returnsDoc'] = 'DTO\\' . $dto . '[]';
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function generateEnums(): void
+    {
+        foreach ($this->enumStack as $hash => $enumDefinition) {
+            $this->removePreviousClass($enumDefinition->getFullName());
+            $creator = new SdkEnumMaker($this, $enumDefinition);
+            $creator->generate();
         }
     }
 
@@ -306,7 +333,15 @@ class Maker
             $type = 'mixed';
             $default = null;
             try {
-                $type = TypeHintResolver::jsonSchemaToPhp($data['schema'] ?? DocHelper::getPath($data, 'schema'));
+                $schema = $data['schema'] ?? DocHelper::getPath($data, 'schema');
+                $type = TypeHintResolver::jsonSchemaToPhp($schema);
+                $this->addEnums(
+                    $type,
+                    $schema,
+                    $convertor,
+                    $data,
+                    $assertions
+                );
             } catch (\Throwable $e) {}
             try {
                 $default = DocHelper::getPath($data, 'schema.default');
@@ -322,6 +357,37 @@ class Maker
             $method->addArgument($argument);
         }
         return $class;
+    }
+
+    protected function addEnums(
+        string $type,
+        array $schema,
+        MethodToClassnameConvertor $convertor,
+        array $data,
+        string &$assertions
+    ): void
+    {
+        if (isset($schema['enum'])) {
+            $hash = md5(implode(',', $schema['enum']));
+
+            $enumDef = $this->enumStack[$hash] ?? null;
+
+            if (!$enumDef) {
+                $enumDef = new EnumDefinition(
+                    $this->namespace . '\\' . $this->apiVendorAlias . '\\' . EnumDefinition::FOLDER,
+                    $convertor->zoneName . ucfirst($data['name']) . 'Enum',
+                    $type,
+                    $schema['enum']
+                );
+                $this->enumStack[$hash] = $enumDef;
+            }
+            $callbackEnumReg = '/callback: \[\w+::class,\s?[\'"]\w+[\'"]\]/';
+            $assertions = preg_replace(
+                $callbackEnumReg,
+                'callback: [' . EnumDefinition::FOLDER . '\\' .$enumDef->getEnumName() . '::class, \'values\']',
+                $assertions
+            );
+        }
     }
 
     /**

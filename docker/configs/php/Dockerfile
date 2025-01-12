@@ -2,9 +2,18 @@ FROM php:8.3-fpm
 ARG WORKDIR
 WORKDIR ${WORKDIR}
 
-RUN apt-get -y update && apt-get -y install git unzip vim rsync librabbitmq-dev libssl-dev
+RUN apt-get -y update && apt-get -y install git  \
+    unzip  \
+    rsync  \
+    zlib1g-dev  \
+    libicu-dev  \
+    g++  \
+    librabbitmq-dev  \
+    libssl-dev
 
 RUN docker-php-ext-install pdo pdo_mysql
+RUN docker-php-ext-configure intl
+RUN docker-php-ext-install intl
 RUN pecl install amqp \
     && docker-php-ext-enable amqp;
 RUN pecl install xdebug && docker-php-ext-enable xdebug;

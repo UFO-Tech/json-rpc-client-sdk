@@ -72,10 +72,4 @@ class SdkClassProcedureMaker
 
         $generator->writeChanges();
     }
-
-
-    protected function getTemplateName(): string
-    {
-        return 'procedure';
-    }
 }

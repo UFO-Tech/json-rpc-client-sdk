@@ -1,0 +1,33 @@
+<?php
+
+use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
+use Ufo\RpcSdk\Maker\Definitions\MethodDefinition;
+
+echo '<?php' . PHP_EOL ?>
+/**
+* Auto generated Enum for easy usage SDK for RPC API <?= $vendor['name'] . PHP_EOL ?>
+<?php require 'docs.php.twig';?>
+*/
+<?php require 'namespace.php.twig';?>
+
+enum <?= $class_name_full ?>: <?= $enum_type . PHP_EOL ?>
+{
+<?php
+foreach ($cases as $name => $case) {
+?>
+    case <?=$name?> = '<?=$case?>';
+<?php
+}
+?>
+
+    public static function values(): array
+    {
+        return array_column(self::cases(), 'value');
+    }
+
+    public static function fromValue(<?=$enum_type ?> $value): self
+    {
+        return self::tryFrom($value) ?? throw new \InvalidArgumentException('"' . $value . '" is invalid value for enum "<?= $class_name_full ?>".');
+    }
+
+}

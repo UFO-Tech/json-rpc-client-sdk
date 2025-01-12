@@ -13,7 +13,8 @@ final readonly class MethodToClassnameConvertor
     private function __construct(
         public string $className,
         public string $apiMethod,
-        public string $separator
+        public string $separator,
+        public string $zoneName,
     ) {}
 
     public static function convert(string $procedureName, bool $async = false): self
@@ -30,6 +31,6 @@ final readonly class MethodToClassnameConvertor
             $apiMethod = $pMatch[3];
             $separator = $pMatch[2];
         }
-        return new self($className . 'SDK', $apiMethod, $separator);
+        return new self($className . 'SDK' , $apiMethod, $separator, $className);
     }
 }

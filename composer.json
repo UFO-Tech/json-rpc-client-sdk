@@ -1,7 +1,7 @@
 {
     "name": "ufo-tech/json-rpc-client-sdk",
     "description": "Simple clientSDK builder for any json-RPC servers",
-    "version": "3.2.1",
+    "version": "3.3.0",
     "license": "MIT",
     "authors": [
         {
@@ -26,7 +26,8 @@
         "symfony/messenger": "^6.0|^7.0",
         "symfony/amqp-messenger": "^7.0",
         "symfony/serializer": "^7.0",
-        "symfony/yaml": "^7.1"
+        "symfony/yaml": "^7.1",
+        "ext-intl": "*"
     },
     "autoload" : {
         "psr-4" : {

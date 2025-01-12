@@ -3,25 +3,19 @@
 namespace Ufo\RpcSdk\Maker;
 
 use Exception;
-use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
-use Ufo\RpcObject\RpcResponse;
-use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
-use Ufo\RpcSdk\Maker\Definitions\ClassDefinition;
 use Ufo\RpcSdk\Maker\Definitions\DtoClassDefinition;
+use Ufo\RpcSdk\Maker\Definitions\EnumDefinition;
 use Ufo\RpcSdk\Maker\Definitions\MethodToClassnameConvertor;
-use Ufo\RpcSdk\Procedures\AbstractProcedure;
-use Ufo\RpcSdk\Procedures\ApiMethod;
-use Ufo\RpcSdk\Procedures\ApiUrl;
 
-class SdkClassDtoMaker
+class SdkEnumMaker
 {
-    const string DEFAULT_TEMPLATE = __DIR__.'/../../templates/dto.php.twig';
+    const string DEFAULT_TEMPLATE = __DIR__.'/../../templates/enum.php.twig';
 
     protected string $template = self::DEFAULT_TEMPLATE;
 
     public function __construct(
         protected Maker  $maker,
-        protected DtoClassDefinition $classDefinition
+        protected EnumDefinition $classDefinition
     ) {}
 
     /**
@@ -34,7 +28,8 @@ class SdkClassDtoMaker
             $this->classDefinition->getFullName(),
             $this->template,
             [
-                'class_name' => $this->classDefinition->getClassName(),
+                'class_name' => $this->classDefinition->getEnumName(),
+                'enum_type' => $this->classDefinition->getType(),
                 'vendor' => [
                     'name' => $this->maker->getApiVendorAlias(),
                     'url' => $this->maker->getApiUrl(),
@@ -42,10 +37,7 @@ class SdkClassDtoMaker
                 'uses' => [
                 ],
                 'interfaces' => [],
-                'extends' => '',
-                'methods' => $this->classDefinition->getMethods(),
-                'propertiesDocs' => $this->classDefinition->getDocs(),
-                'properties' => $this->classDefinition->getProperties(),
+                'cases' => $this->classDefinition->getCases(),
                 'tab' => function (int $count = 1) {
                     return str_repeat(' ', 4 * $count);
                 }
@@ -54,4 +46,5 @@ class SdkClassDtoMaker
 
         $generator->writeChanges();
     }
+
 }
