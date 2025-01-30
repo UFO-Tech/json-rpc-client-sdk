@@ -42,6 +42,7 @@ use function in_array;
 use function md5;
 use function preg_match;
 use function preg_replace;
+use function str_contains;
 use function str_replace;
 use function ucfirst;
 
@@ -335,6 +336,7 @@ class Maker
             try {
                 $schema = $data['schema'] ?? DocHelper::getPath($data, 'schema');
                 $type = TypeHintResolver::jsonSchemaToPhp($schema);
+                $type = str_contains($type, 'int') ? 'int' : 'string';
                 $this->addEnums(
                     $type,
                     $schema,
