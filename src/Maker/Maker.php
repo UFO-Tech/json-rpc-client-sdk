@@ -336,7 +336,6 @@ class Maker
             try {
                 $schema = $data['schema'] ?? DocHelper::getPath($data, 'schema');
                 $type = TypeHintResolver::jsonSchemaToPhp($schema);
-                $type = str_contains($type, 'int') ? 'int' : 'string';
                 $this->addEnums(
                     $type,
                     $schema,
@@ -378,7 +377,7 @@ class Maker
                 $enumDef = new EnumDefinition(
                     $this->namespace . '\\' . $this->apiVendorAlias . '\\' . EnumDefinition::FOLDER,
                     $convertor->zoneName . ucfirst($data['name']) . 'Enum',
-                    $type,
+                    str_contains($type, 'int') ? 'int' : 'string',
                     $schema['enum']
                 );
                 $this->enumStack[$hash] = $enumDef;
