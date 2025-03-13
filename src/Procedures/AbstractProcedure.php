@@ -9,6 +9,7 @@ use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Throwable;
 use Ufo\RpcError\AbstractRpcErrorException;
+use Ufo\RpcObject\IRpcSpecialParamHandler;
 use Ufo\RpcObject\RpcRequest;
 use Ufo\RpcObject\RpcResponse;
 use Ufo\RpcObject\SpecialRpcParamsEnum;
@@ -38,7 +39,7 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
         string $rpcVersion = self::DEFAULT_RPC_VERSION,
         protected ?HttpClientInterface $httpClient = null,
         array $httpRequestOptions = [],
-        protected array $rpcSpecialParams = []
+        protected ?IRpcSpecialParamHandler $rpcSpecialParams = null
     )
     {
         parent::__construct($requestId, $rpcVersion);
@@ -72,9 +73,8 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
         }
 
         $body = $apiMethodDef->body;
-        if (!empty($this->rpcSpecialParams)) {
-            $specialsParams = SpecialRpcParamsEnum::fromArray($this->rpcSpecialParams);
-            $body[SpecialRpcParamsEnum::PREFIX] = $specialsParams->toArray();
+        if ($this->rpcSpecialParams) {
+            $body[SpecialRpcParamsEnum::PREFIX] = $this->rpcSpecialParams->getSpecialParams();
         }
 
         $request = $this->httpClient->request(
@@ -96,6 +96,5 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
             throw new SdkException($e->getMessage(), $e->getCode(), $e);
         }
     }
-
 
 }
