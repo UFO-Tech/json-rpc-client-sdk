@@ -19,5 +19,4 @@ services:
 
 networks:
   tm:
-    name: tm-hub_tm
     external: true

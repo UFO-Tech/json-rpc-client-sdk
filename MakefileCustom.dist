@@ -1,0 +1,12 @@
+
+test: CMD = test
+test: composer
+
+debug-config: EXEC = debug:config
+debug-config: symfony
+
+sdk: EXEC = ufo:sdk:generate
+sdk: symfony
+
+sdk-vendor: EXEC = ufo:sdk:generate --vendor=$(VENDOR)
+sdk-vendor: symfony

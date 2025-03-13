@@ -26,3 +26,4 @@
 /sdk/
 /composer.lock
 /bin/test.php
+/MakefileCustom

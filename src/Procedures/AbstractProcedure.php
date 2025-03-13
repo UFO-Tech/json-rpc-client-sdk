@@ -3,32 +3,23 @@
 namespace Ufo\RpcSdk\Procedures;
 
 
-use ReflectionClass;
 use ReflectionException;
 use Symfony\Component\HttpClient\HttpClient;
-use Symfony\Component\Validator\Validation;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Throwable;
 use Ufo\RpcError\AbstractRpcErrorException;
 use Ufo\RpcObject\RpcRequest;
 use Ufo\RpcObject\RpcResponse;
-use Ufo\RpcObject\Rules\Validator\ConstraintsImposedException;
-use Ufo\RpcObject\Rules\Validator\RpcValidator;
+use Ufo\RpcObject\SpecialRpcParamsEnum;
 use Ufo\RpcObject\Transformer\ResponseCreator;
 use Ufo\RpcSdk\Exceptions\ConfigNotFoundException;
 use Ufo\RpcSdk\Exceptions\SdkException;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
-use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
-use function count;
-use function debug_backtrace;
 use function end;
 use function explode;
-use function json_encode;
 use function pathinfo;
-use function uniqid;
-
-use const DEBUG_BACKTRACE_PROVIDE_OBJECT;
 
 abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMethodClass
 {
@@ -42,11 +33,12 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
      * @param array $httpRequestOptions
      */
     public function __construct(
-        protected array                $headers = [],
-        string|int|null                $requestId = null,
-        string                         $rpcVersion = self::DEFAULT_RPC_VERSION,
+        protected array $headers = [],
+        string|int|null $requestId = null,
+        string $rpcVersion = self::DEFAULT_RPC_VERSION,
         protected ?HttpClientInterface $httpClient = null,
-        array                          $httpRequestOptions = []
+        array $httpRequestOptions = [],
+        protected array $rpcSpecialParams = []
     )
     {
         parent::__construct($requestId, $rpcVersion);
@@ -79,12 +71,18 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
             $headers += $this->headers;
         }
 
+        $body = $apiMethodDef->body;
+        if (!empty($this->rpcSpecialParams)) {
+            $specialsParams = SpecialRpcParamsEnum::fromArray($this->rpcSpecialParams);
+            $body[SpecialRpcParamsEnum::PREFIX] = $specialsParams->toArray();
+        }
+
         $request = $this->httpClient->request(
             $apiUrl->getMethod(),
             $apiUrl->getUrl(),
             [
                 'headers' => $headers,
-                'json' => $apiMethodDef->body
+                'json' => $body
             ]
         );
         RequestResponseStack::addRequest(RpcRequest::fromArray($apiMethodDef->body), $headers);

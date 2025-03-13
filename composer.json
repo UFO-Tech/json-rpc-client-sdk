@@ -1,7 +1,7 @@
 {
     "name": "ufo-tech/json-rpc-client-sdk",
     "description": "Simple clientSDK builder for any json-RPC servers",
-    "version": "3.3.1",
+    "version": "3.4.0",
     "license": "MIT",
     "authors": [
         {
@@ -18,7 +18,7 @@
         "symfony/cache": ">=6.4",
         "symfony/maker-bundle": "^1.48",
         "symfony/http-client": ">=6.4",
-        "ufo-tech/rpc-objects": ">=2.7.0",
+        "ufo-tech/rpc-objects": "^2.8",
         "ufo-tech/rpc-exceptions": ">=1.0.0",
         "ext-readline": "*",
         "ufo-cms/colored_cli": "^1.0",
