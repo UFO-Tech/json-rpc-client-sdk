@@ -7,9 +7,11 @@ use ReflectionException;
 use Symfony\Component\Validator\Validation;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Ufo\RpcError\AbstractRpcErrorException;
+use Ufo\RpcObject\IRpcSpecialParamHandler;
 use Ufo\RpcObject\RpcResponse;
 use Ufo\RpcObject\Rules\Validator\ConstraintsImposedException;
 use Ufo\RpcObject\Rules\Validator\RpcValidator;
+use Ufo\RpcObject\SpecialRpcParamsEnum;
 use Ufo\RpcSdk\Exceptions\SdkException;
 use Ufo\RpcObject\RPC;
 
@@ -22,11 +24,12 @@ use const DEBUG_BACKTRACE_PROVIDE_OBJECT;
 
 abstract class AbstractBaseProcedure
 {
-    const DEFAULT_RPC_VERSION = '2.0';
+    const string DEFAULT_RPC_VERSION = '2.0';
 
     public function __construct(
-        protected string|int|null      $requestId,
-        protected string               $rpcVersion,
+        protected string|int|null $requestId,
+        protected string $rpcVersion,
+        protected ?IRpcSpecialParamHandler $rpcSpecialParams = null
     )
     {
         $this->requestId = $requestId ?? uniqid();
@@ -69,6 +72,9 @@ abstract class AbstractBaseProcedure
             throw AbstractRpcErrorException::fromCode($error->getCode(), json_encode($error->getConstraintsImposed()));
         }
         $body += $addOptions;
+        if ($this->rpcSpecialParams) {
+            $body[SpecialRpcParamsEnum::PREFIX] = $this->rpcSpecialParams->getSpecialParams();
+        }
 
         return new CallApiDefinition(
             $refClass,

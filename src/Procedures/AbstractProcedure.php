@@ -39,10 +39,10 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
         string $rpcVersion = self::DEFAULT_RPC_VERSION,
         protected ?HttpClientInterface $httpClient = null,
         array $httpRequestOptions = [],
-        protected ?IRpcSpecialParamHandler $rpcSpecialParams = null
+        ?IRpcSpecialParamHandler $rpcSpecialParams = null
     )
     {
-        parent::__construct($requestId, $rpcVersion);
+        parent::__construct($requestId, $rpcVersion, $rpcSpecialParams);
         $this->httpClient = $httpClient ?? HttpClient::create($httpRequestOptions);
     }
 
@@ -72,17 +72,12 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
             $headers += $this->headers;
         }
 
-        $body = $apiMethodDef->body;
-        if ($this->rpcSpecialParams) {
-            $body[SpecialRpcParamsEnum::PREFIX] = $this->rpcSpecialParams->getSpecialParams();
-        }
-
         $request = $this->httpClient->request(
             $apiUrl->getMethod(),
             $apiUrl->getUrl(),
             [
                 'headers' => $headers,
-                'json' => $body
+                'json' => $apiMethodDef->body
             ]
         );
         RequestResponseStack::addRequest(RpcRequest::fromArray($apiMethodDef->body), $headers);
