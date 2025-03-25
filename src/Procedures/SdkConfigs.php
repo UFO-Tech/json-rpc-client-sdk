@@ -7,11 +7,15 @@ use Ufo\RpcError\WrongWayException;
 use Ufo\RpcSdk\Exceptions\ConfigNotFoundException;
 
 use function file_exists;
+use function is_array;
 
 class SdkConfigs
 {
     const string CONFIG_NAME = 'sdk_config.yaml';
     const string DIST = '.dist';
+
+    const string SYNC = 'sync';
+    const string ASYNC = 'async';
 
     public function __construct(
         readonly public string $path,
@@ -29,9 +33,14 @@ class SdkConfigs
         return $configs;
     }
 
-    public function getApiUrl(string $vendor): string
+    public function getApiEndpoint(string $vendor, bool $sync = true): string
     {
-        return $this->getConfigs()[$vendor] ?? $this->getConfigs(true)[$vendor] ?? throw new ConfigNotFoundException();
+        $config = $this->getConfigs()[$vendor] ?? $this->getConfigs(true)[$vendor] ?? throw new ConfigNotFoundException();
+        if (is_array($config)) {
+            $key = $sync ? static::SYNC : static::ASYNC;
+            $config = $config[$key] ?? throw new ConfigNotFoundException();
+        }
+        return $config;
     }
 
     public function getConfigPath(): string

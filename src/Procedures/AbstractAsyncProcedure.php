@@ -5,26 +5,21 @@ namespace Ufo\RpcSdk\Procedures;
 
 use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 use Symfony\Component\Messenger\Envelope;
-use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\Transport\Serialization\PhpSerializer;
 use Symfony\Component\Messenger\Transport\TransportFactoryInterface;
-use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Throwable;
 use Ufo\RpcError\AbstractRpcErrorException;
 use Ufo\RpcObject\RpcAsyncRequest;
 use Ufo\RpcObject\RpcRequest;
-use Ufo\RpcObject\Transformer\ResponseCreator;
-use Ufo\RpcObject\Transformer\Transformer;
+use Ufo\RpcSdk\Exceptions\ConfigNotFoundException;
 use Ufo\RpcSdk\Exceptions\SdkException;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
 
 use function count;
 use function end;
 use function explode;
-use function rand;
 use function str_replace;
-
-use const DEBUG_BACKTRACE_PROVIDE_OBJECT;
 
 abstract class AbstractAsyncProcedure extends AbstractBaseProcedure implements ISdkMethodClass
 {
@@ -48,15 +43,20 @@ abstract class AbstractAsyncProcedure extends AbstractBaseProcedure implements I
     /**
      * @return true
      * @throws SdkException
-     * @throws AbstractRpcErrorException
+     * @throws AbstractRpcErrorException|ExceptionInterface
      */
     protected function requestApi(): true
     {
         $apiMethodDef = $this->callApiMethodDef();
-        /**
-         * @var AsyncTransport $asyncTransport
-         */
-        $asyncTransport = $apiMethodDef->refClass->getAttributes(AsyncTransport::class)[0]->newInstance();
+
+        try {
+            $attr = ($apiMethodDef->refClass->getAttributes(AsyncTransport::class) ?? [])[0] ?? null;
+            $asyncTransport = $attr?->newInstance() ?? throw new ConfigNotFoundException();
+        } catch (ConfigNotFoundException) {
+            $nsParts = explode('\\', $apiMethodDef->refClass->getNamespaceName());
+            $asyncTransport = new AsyncTransport($this->sdkConfigs->getApiEndpoint(end($nsParts), false));
+        }
+
         $asyncDSN = str_replace(AsyncTransport::PLACEHOLDER, $this->secretAsync, $asyncTransport->dsn);
 
         $transport = $this->transportFactory->createTransport($asyncDSN, $this->asyncOptions($asyncDSN), new PhpSerializer());

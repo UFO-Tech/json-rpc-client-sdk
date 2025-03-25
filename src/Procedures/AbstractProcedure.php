@@ -3,7 +3,6 @@
 namespace Ufo\RpcSdk\Procedures;
 
 
-use ReflectionException;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -12,7 +11,6 @@ use Ufo\RpcError\AbstractRpcErrorException;
 use Ufo\RpcObject\IRpcSpecialParamHandler;
 use Ufo\RpcObject\RpcRequest;
 use Ufo\RpcObject\RpcResponse;
-use Ufo\RpcObject\SpecialRpcParamsEnum;
 use Ufo\RpcObject\Transformer\ResponseCreator;
 use Ufo\RpcSdk\Exceptions\ConfigNotFoundException;
 use Ufo\RpcSdk\Exceptions\SdkException;
@@ -20,11 +18,9 @@ use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
 
 use function end;
 use function explode;
-use function pathinfo;
 
 abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMethodClass
 {
-    protected ?SdkConfigs $sdkConfigs = null;
 
     /**
      * @param array $headers ['header_key' => 'some_header_string_without_spaces']
@@ -49,22 +45,18 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
     /**
      * @return RpcResponse
      * @throws SdkException
-     * @throws ReflectionException
      * @throws TransportExceptionInterface
      * @throws AbstractRpcErrorException
      */
     protected function requestApi(): RpcResponse
     {
         $apiMethodDef = $this->callApiMethodDef();
-        if (!$this->sdkConfigs) {
-            $this->sdkConfigs = new SdkConfigs(pathinfo($apiMethodDef->refClass->getFileName())['dirname'] . '/..');
-        }
         try {
             $attr = ($apiMethodDef->refClass->getAttributes(ApiUrl::class) ?? [])[0] ?? null;
             $apiUrl = $attr?->newInstance() ?? throw new ConfigNotFoundException();
         } catch (ConfigNotFoundException) {
             $nsParts = explode('\\', $apiMethodDef->refClass->getNamespaceName());
-            $apiUrl = new ApiUrl($this->sdkConfigs->getApiUrl(end($nsParts)));
+            $apiUrl = new ApiUrl($this->sdkConfigs->getApiEndpoint(end($nsParts)));
         }
 
         $headers = [];

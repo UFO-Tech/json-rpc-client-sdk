@@ -1,7 +1,7 @@
 {
     "name": "ufo-tech/json-rpc-client-sdk",
     "description": "Simple clientSDK builder for any json-RPC servers",
-    "version": "3.4.0",
+    "version": "3.5.0",
     "license": "MIT",
     "authors": [
         {
@@ -14,15 +14,15 @@
     "keywords" : ["rpc", "async", "async api", "async rpc", "async transport", "ufo", "api", "sdk", "sdk generator", "rpc client", "json-rpc"],
     "require" : {
         "php": ">=8.3",
-        "symfony/filesystem": ">=6.4",
-        "symfony/cache": ">=6.4",
+        "symfony/filesystem": "^7.2",
+        "symfony/cache": "^7.2",
         "symfony/maker-bundle": "^1.48",
-        "symfony/http-client": ">=6.4",
+        "symfony/http-client": "^7.2",
         "ufo-tech/rpc-objects": "^2.8",
-        "ufo-tech/rpc-exceptions": ">=1.0.0",
+        "ufo-tech/rpc-exceptions": "^1",
         "ext-readline": "*",
         "ufo-cms/colored_cli": "^1.0",
-        "symfony/validator": ">=6.4",
+        "symfony/validator": "^7.2",
         "symfony/messenger": "^6.0|^7.0",
         "symfony/amqp-messenger": "^7.0",
         "symfony/serializer": "^7.0",

@@ -22,7 +22,15 @@ class SdkConfigMaker
     public function generate(): void
     {
         $configs = $this->sdkConfigs->getConfigs(true);
-        $configs[$this->maker->getApiVendorAlias()] = $this->maker->getApiUrl();
+        $vendor = $this->maker->getApiVendorAlias();
+        $configs[$vendor] = [
+            SdkConfigs::SYNC => $this->maker->getApiUrl()
+        ];
+        $async = $this->maker->getRpcTransport(true);
+        if (!empty($async)) {
+            $configs[$vendor][SdkConfigs::ASYNC] = $async;
+        }
+
         file_put_contents($this->sdkConfigs->getConfigDistPath(), Yaml::dump($configs));
     }
 

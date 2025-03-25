@@ -2,11 +2,8 @@ version: "3.8"
 services:
   php:
     container_name: php_${PROJECT_NAME}
-    build:
-      context: ./
-      dockerfile: docker/configs/php/Dockerfile
-      args:
-        WORKDIR: ${WORKDIR}
+    image: ufotech/php:8.4-fpm
+    working_dir: ${WORKDIR}
     environment:
       WORKDIR: ${WORKDIR}
       XDEBUG_CONFIG: remote_host={{YOUR_IP_ADDRESS}}

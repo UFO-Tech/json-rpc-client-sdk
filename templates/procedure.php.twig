@@ -12,18 +12,7 @@ use Ufo\RpcSdk\Maker\Definitions\MethodDefinition;
 */
 <?php require 'namespace.php.twig';?>
 
-<?
-if ($async) {
-?>
-#[AsyncTransport('<?=$asyncTransport ?>')]
-<?
-} elseif ($apiUrlInAttr) {
-?>
-#[ApiUrl('<?=$vendor['url'] ?>')]
-<?
-}
-?>
-#[AutoconfigureTag('<?=$async ? ISdkMethodClass::ASYNC_TAG : ISdkMethodClass::TAG ?>')]
+#[AutoconfigureTag('<?= ISdkMethodClass::TAG ?>')]
 class <?= $class_name_full ?><?= PHP_EOL ?>
 {
 <?php

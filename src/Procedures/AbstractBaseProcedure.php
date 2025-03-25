@@ -18,6 +18,7 @@ use Ufo\RpcObject\RPC;
 use function count;
 use function debug_backtrace;
 use function json_encode;
+use function pathinfo;
 use function uniqid;
 
 use const DEBUG_BACKTRACE_PROVIDE_OBJECT;
@@ -25,6 +26,7 @@ use const DEBUG_BACKTRACE_PROVIDE_OBJECT;
 abstract class AbstractBaseProcedure
 {
     const string DEFAULT_RPC_VERSION = '2.0';
+    protected ?SdkConfigs $sdkConfigs = null;
 
     public function __construct(
         protected string|int|null $requestId,
@@ -75,13 +77,21 @@ abstract class AbstractBaseProcedure
         if ($this->rpcSpecialParams) {
             $body[SpecialRpcParamsEnum::PREFIX] = $this->rpcSpecialParams->getSpecialParams();
         }
-
-        return new CallApiDefinition(
+        $definition = new CallApiDefinition(
             $refClass,
             $refMethod,
             $procedure,
             $body
         );
+        $this->setConfigs($definition);
+        return $definition;
+    }
+
+    protected function setConfigs(CallApiDefinition $apiMethodDef): void
+    {
+        if (!$this->sdkConfigs) {
+            $this->sdkConfigs = new SdkConfigs(pathinfo($apiMethodDef->refClass->getFileName())['dirname'] . '/..');
+        }
     }
 
     /**
