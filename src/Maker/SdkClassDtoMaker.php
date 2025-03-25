@@ -4,6 +4,10 @@ namespace Ufo\RpcSdk\Maker;
 
 use Exception;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+use Ufo\RpcObject\DTO\ArrayConstructibleTrait;
+use Ufo\RpcObject\DTO\ArrayConvertibleTrait;
+use Ufo\RpcObject\DTO\IArrayConstructible;
+use Ufo\RpcObject\DTO\IArrayConvertible;
 use Ufo\RpcObject\RpcResponse;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
 use Ufo\RpcSdk\Maker\Definitions\ClassDefinition;
@@ -40,6 +44,10 @@ class SdkClassDtoMaker
                     'url' => $this->maker->getApiUrl(),
                 ],
                 'uses' => [
+                    IArrayConstructible::class,
+                    IArrayConvertible::class,
+                    ArrayConstructibleTrait::class,
+                    ArrayConvertibleTrait::class,
                 ],
                 'interfaces' => [],
                 'extends' => '',

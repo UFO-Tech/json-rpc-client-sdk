@@ -10,8 +10,10 @@ echo '<?php' . PHP_EOL ?>
 */
 <?php require 'namespace.php.twig';?>
 
-class <?= $class_name_full ?><?= PHP_EOL ?>
+class <?= $class_name_full ?>  implements IArrayConvertible, IArrayConstructible<?= PHP_EOL ?>
 {
+    use ArrayConstructibleTrait, ArrayConvertibleTrait;
+
 <?php
 foreach ($properties as $name => $type) {
 ?>
