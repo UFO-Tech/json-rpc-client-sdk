@@ -12,7 +12,7 @@ use Ufo\RpcSdk\Maker\Definitions\MethodDefinition;
 */
 <?php require 'namespace.php.twig';?>
 
-#[AutoconfigureTag('<?= ISdkMethodClass::TAG ?>')]
+#[AutoconfigureTag('<?=$async ? ISdkMethodClass::ASYNC_TAG : ISdkMethodClass::TAG ?>')]
 class <?= $class_name_full ?><?= PHP_EOL ?>
 {
 <?php
