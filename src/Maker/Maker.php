@@ -368,8 +368,9 @@ class Maker
         string &$assertions
     ): void
     {
-        if (isset($schema['enum'])) {
-            $hash = md5(implode(',', $schema['enum']));
+        $enum = $schema['enum'] ?? $schema['items']['enum'] ?? null;
+        if ($enum) {
+            $hash = md5(implode(',', $enum));
 
             $enumDef = $this->enumStack[$hash] ?? null;
 
@@ -378,7 +379,7 @@ class Maker
                     $this->namespace . '\\' . $this->apiVendorAlias . '\\' . EnumDefinition::FOLDER,
                     $convertor->zoneName . ucfirst($data['name']) . 'Enum',
                     str_contains($type, 'int') ? 'int' : 'string',
-                    $schema['enum']
+                    $enum
                 );
                 $this->enumStack[$hash] = $enumDef;
             }
