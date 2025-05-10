@@ -20,7 +20,7 @@ use Symfony\Contracts\Cache\ItemInterface;
 use Throwable;
 use Ufo\RpcError\RpcDataNotFoundException;
 use Ufo\RpcError\WrongWayException;
-use Ufo\RpcObject\Helpers\TypeHintResolver;
+use Ufo\DTO\Helpers\TypeHintResolver;
 use Ufo\RpcObject\RpcTransport;
 use Ufo\RpcSdk\Exceptions\SdkBuilderException;
 use Ufo\RpcSdk\Exceptions\UnsupportedFormatDocumentationException;

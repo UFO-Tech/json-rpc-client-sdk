@@ -19,6 +19,7 @@
         "symfony/maker-bundle": "^1.48",
         "symfony/http-client": "^7.2",
         "ufo-tech/rpc-objects": "^3.0",
+        "ufo-tech/dto-transformer": "^1.0",
         "ufo-tech/rpc-exceptions": "^1",
         "ext-readline": "*",
         "ufo-cms/colored_cli": "^1.0",

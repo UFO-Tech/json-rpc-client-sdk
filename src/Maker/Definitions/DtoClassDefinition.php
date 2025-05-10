@@ -2,7 +2,7 @@
 
 namespace Ufo\RpcSdk\Maker\Definitions;
 
-use Ufo\RpcObject\Helpers\TypeHintResolver;
+use Ufo\DTO\Helpers\TypeHintResolver;
 
 use function end;
 use function explode;
