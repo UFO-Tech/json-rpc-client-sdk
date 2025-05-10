@@ -9,7 +9,6 @@ use function class_exists;
 use function end;
 use function explode;
 use function implode;
-use function reset;
 use function str_pad;
 
 use const PHP_EOL;

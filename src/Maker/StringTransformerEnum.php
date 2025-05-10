@@ -3,7 +3,6 @@
 namespace Ufo\RpcSdk\Maker;
 
 use function preg_replace;
-use function str_starts_with;
 use function strtoupper;
 
 enum StringTransformerEnum: string

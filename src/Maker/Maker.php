@@ -30,7 +30,6 @@ use Ufo\RpcSdk\Maker\Definitions\DtoClassDefinition;
 use Ufo\RpcSdk\Maker\Definitions\EnumDefinition;
 use Ufo\RpcSdk\Maker\Definitions\MethodDefinition;
 use Ufo\RpcSdk\Maker\Definitions\MethodToClassnameConvertor;
-use Ufo\RpcSdk\Maker\Definitions\ParamToStringConverter;
 use Ufo\RpcSdk\Maker\Definitions\UfoEnvelope;
 use Ufo\RpcSdk\Procedures\AsyncTransport;
 

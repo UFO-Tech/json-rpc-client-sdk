@@ -3,9 +3,7 @@
 namespace Ufo\RpcSdk\Maker;
 
 use Exception;
-use Ufo\RpcSdk\Maker\Definitions\DtoClassDefinition;
 use Ufo\RpcSdk\Maker\Definitions\EnumDefinition;
-use Ufo\RpcSdk\Maker\Definitions\MethodToClassnameConvertor;
 
 class SdkEnumMaker
 {

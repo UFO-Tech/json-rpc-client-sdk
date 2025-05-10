@@ -6,9 +6,6 @@ use Countable;
 use Ufo\RpcError\WrongWayException;
 use Ufo\RpcObject\RPC\Assertions;
 
-use function array_keys;
-use function count;
-use function implode;
 use function is_null;
 use function str_pad;
 

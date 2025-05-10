@@ -4,15 +4,12 @@ namespace Ufo\RpcSdk\Maker;
 
 use Exception;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
-use Ufo\RpcObject\RpcResponse;
 use Ufo\RpcObject\Transformer\Transformer;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
 use Ufo\RpcSdk\Maker\Definitions\ClassDefinition;
 use Ufo\RpcSdk\Procedures\AbstractAsyncProcedure;
 use Ufo\RpcSdk\Procedures\AbstractProcedure;
 use Ufo\RpcSdk\Procedures\ApiMethod;
-use Ufo\RpcSdk\Procedures\ApiUrl;
-use Ufo\RpcSdk\Procedures\AsyncTransport;
 
 class SdkClassProcedureMaker
 {

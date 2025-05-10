@@ -3,7 +3,6 @@
 namespace Ufo\RpcSdk\Maker\Definitions;
 
 use function array_map;
-use function array_merge;
 use function array_unique;
 use function count;
 use function implode;

@@ -2,12 +2,8 @@
 
 namespace Ufo\RpcSdk\Maker\Definitions;
 
-use JetBrains\PhpStorm\Pure;
 use Ufo\RpcObject\Helpers\TypeHintResolver;
 
-use function array_map;
-use function array_merge;
-use function array_unique;
 use function end;
 use function explode;
 use function implode;

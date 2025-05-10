@@ -2,9 +2,6 @@
 
 namespace Ufo\RpcSdk\Maker\Definitions;
 
-use Ufo\RpcError\WrongWayException;
-use Ufo\RpcSdk\Exceptions\SdkBuilderException;
-
 class ArgumentDefinition
 {
     protected AssertionsDefinition $assertions;
