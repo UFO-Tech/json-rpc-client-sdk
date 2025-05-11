@@ -3,10 +3,10 @@
 namespace Ufo\RpcSdk\Maker;
 
 use Exception;
-use Ufo\DTO\ArrayConstructibleTrait;
-use Ufo\DTO\ArrayConvertibleTrait;
-use Ufo\DTO\IArrayConstructible;
-use Ufo\DTO\IArrayConvertible;
+use Ufo\DTO\Interfaces\ArrayConstructibleTrait;
+use Ufo\DTO\Interfaces\ArrayConvertibleTrait;
+use Ufo\DTO\Interfaces\IArrayConstructible;
+use Ufo\DTO\Interfaces\IArrayConvertible;
 use Ufo\RpcSdk\Maker\Definitions\DtoClassDefinition;
 
 class SdkClassDtoMaker
