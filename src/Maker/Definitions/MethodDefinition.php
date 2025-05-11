@@ -136,6 +136,7 @@ class MethodDefinition
     public function setReturns(array|string $returns, ?string $returnsDoc = null): void
     {
         if (is_array($returns)) {
+            $returns = array_column($returns['oneOf'], 'type');
             $this->returns = array_unique(array_map(function ($v) {
                 return MethodDefinition::normalizeType($v);
             }, $returns));
