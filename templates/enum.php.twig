@@ -12,13 +12,10 @@ echo '<?php' . PHP_EOL ?>
 
 enum <?= $class_name_full ?>: <?= $enum_type . PHP_EOL ?>
 {
-<?php
-foreach ($cases as $name => $case) {
-?>
-    case <?=$name?> = '<?=$case?>';
-<?php
-}
-?>
+<?php foreach ($cases as $name => $case): ?>
+    case <?=$name?> = <?= $enum_type === 'int' ? $case : "'$case'" ?>;
+<?php endforeach; ?>
+
 
     public static function values(): array
     {
@@ -28,6 +25,11 @@ foreach ($cases as $name => $case) {
     public static function fromValue(<?=$enum_type ?> $value): self
     {
         return self::tryFrom($value) ?? throw new \InvalidArgumentException('"' . $value . '" is invalid value for enum "<?= $class_name_full ?>".');
+    }
+
+    public static function tryFromValue(<?=$enum_type ?> $value): self
+    {
+        return self::tryFrom($value);
     }
 
 }

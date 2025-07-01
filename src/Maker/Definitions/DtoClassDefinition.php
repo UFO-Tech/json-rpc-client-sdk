@@ -10,6 +10,8 @@ use function implode;
 
 class DtoClassDefinition extends ClassDefinition
 {
+    const string FOLDER = 'DTO';
+
     protected array $docs = [];
 
     /**
@@ -22,6 +24,11 @@ class DtoClassDefinition extends ClassDefinition
     )
     {
         parent::__construct($this->namespace, $this->className);
+    }
+
+    public static function dtoWithNamespace(string $dtoName, bool $collection = false): string
+    {
+        return static::FOLDER . '\\' . $dtoName . ($collection ? '[]' : '');
     }
 
     /**

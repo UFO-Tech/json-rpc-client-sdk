@@ -19,9 +19,17 @@ class EnumDefinition
         array $values,
     )
     {
-        foreach ($values as $value) {
-            $this->values[StringTransformerEnum::transformName($value)] = $value;
+        foreach ($values as $key => $value) {
+            if (is_int($key)) {
+                $key = StringTransformerEnum::transformName($value);
+            }
+            $this->values[$key] = $value;
         }
+    }
+
+    public function enumWithNamespace(): string
+    {
+        return static::FOLDER . '\\' . $this->enumName;
     }
 
     /**

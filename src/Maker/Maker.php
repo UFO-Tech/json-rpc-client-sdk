@@ -21,6 +21,7 @@ use Throwable;
 use Ufo\RpcError\RpcDataNotFoundException;
 use Ufo\RpcError\WrongWayException;
 use Ufo\DTO\Helpers\TypeHintResolver;
+use Ufo\RpcObject\DocsHelper\XUfoValuesEnum;
 use Ufo\RpcObject\RpcTransport;
 use Ufo\RpcSdk\Exceptions\SdkBuilderException;
 use Ufo\RpcSdk\Exceptions\UnsupportedFormatDocumentationException;
@@ -36,8 +37,10 @@ use Ufo\RpcSdk\Procedures\AsyncTransport;
 use function count;
 use function current;
 use function explode;
+use function file_get_contents;
 use function implode;
 use function in_array;
+use function json_decode;
 use function md5;
 use function preg_match;
 use function preg_replace;
@@ -176,7 +179,7 @@ class Maker
         }
 
         try {
-            $env = $this->rpcResponse['servers'][0]['x-ufo']['envelop'] ?? '';
+            $env = $this->rpcResponse['servers'][0][XUfoValuesEnum::CORE->value]['envelop'] ?? '';
             $matches = [];
             if (preg_match('/UFO-RPC-(\d)/', $env, $matches)) {
                 $this->envelope = new UfoEnvelope((int)$matches[1]);
@@ -236,17 +239,15 @@ class Maker
             $ref = DocHelper::getPath($procedureData['result']['schema'], 'items.$ref');
             $collection = true;
         }
-        $p = explode('/', $ref);
-        $dtoName = end($p);
-
+        $dtoName = $this->getDtoNameFromRef($ref);
         $dto = $this->generateDto($dtoName);
 
         if (!$collection) {
-            MethodDefinition::addTypeExclude('DTO\\' . $dto);
-            $procedureData['returns'] = 'DTO\\' . $dto;
+            MethodDefinition::addTypeExclude(DtoClassDefinition::dtoWithNamespace($dto));
+            $procedureData['returns'] = DtoClassDefinition::dtoWithNamespace($dto);
         } else {
             $procedureData['returns'] = 'array';
-            $procedureData['returnsDoc'] = 'DTO\\' . $dto . '[]';
+            $procedureData['returnsDoc'] = DtoClassDefinition::dtoWithNamespace($dto, true);
         }
     }
 
@@ -271,7 +272,7 @@ class Maker
             $this->dtoStack[$dtoName] = $className;
 
             $class = new DtoClassDefinition(
-                $this->namespace . '\\' . $this->apiVendorAlias . '\\DTO',
+                $this->namespace . '\\' . $this->apiVendorAlias . '\\' . DtoClassDefinition::FOLDER,
                 $className
             );
             $this->removePreviousClass($class->getFullName());
@@ -310,8 +311,7 @@ class Maker
      * @param bool $async
      * @return ClassDefinition
      */
-    protected function classAddOrUpdate(string $procedureName, array $procedureData, bool $async = false):
-    ClassDefinition
+    protected function classAddOrUpdate(string $procedureName, array $procedureData, bool $async = false): ClassDefinition
     {
         $ns = $this->namespace;
         $ns .= '\\' . $this->apiVendorAlias;
@@ -329,23 +329,29 @@ class Maker
         $class->addMethod($method);
 
         foreach ($procedureData['params'] as $data) {
-            $assertions = $data['x-ufo-assertions'] ?? null;
+            $assertions = $data[XUfoValuesEnum::ASSERTIONS->value] ?? null;
             $type = 'mixed';
             $default = null;
             try {
                 $schema = $data['schema'] ?? DocHelper::getPath($data, 'schema');
+
                 $type = TypeHintResolver::jsonSchemaToPhp($schema);
                 $this->addEnums(
                     $type,
                     $schema,
-                    $convertor,
                     $data,
                     $assertions
                 );
-            } catch (\Throwable $e) {}
+            } catch (\Throwable) {}
+
             try {
                 $default = DocHelper::getPath($data, 'schema.default');
             } catch (RpcDataNotFoundException) {}
+
+            if ($type === TypeHintResolver::OBJECT->value && ($ref = $schema['$ref'] ?? false)) {
+                $dtoName = $this->getDtoNameFromRef($ref);
+                $type = DtoClassDefinition::dtoWithNamespace($this->generateDto($dtoName));;
+            }
 
             $argument = new ArgumentDefinition(
                 $data['name'],
@@ -362,7 +368,6 @@ class Maker
     protected function addEnums(
         string $type,
         array $schema,
-        MethodToClassnameConvertor $convertor,
         array $data,
         string &$assertions
     ): void
@@ -376,16 +381,16 @@ class Maker
             if (!$enumDef) {
                 $enumDef = new EnumDefinition(
                     $this->namespace . '\\' . $this->apiVendorAlias . '\\' . EnumDefinition::FOLDER,
-                    $convertor->zoneName . ucfirst($data['name']) . 'Enum',
+                    $schema[XUfoValuesEnum::ENUM_NAME->value] ?? ucfirst($data['name']) . 'Enum',
                     str_contains($type, 'int') ? 'int' : 'string',
-                    $enum
+                    $schema[XUfoValuesEnum::ENUM->value] ?? $enum
                 );
                 $this->enumStack[$hash] = $enumDef;
             }
             $callbackEnumReg = '/callback: \[\w+::class,\s?[\'"]\w+[\'"]\]/';
             $assertions = preg_replace(
                 $callbackEnumReg,
-                'callback: [' . EnumDefinition::FOLDER . '\\' .$enumDef->getEnumName() . '::class, \'values\']',
+                'callback: [' . $enumDef->enumWithNamespace() . '::class, \'values\']',
                 $assertions
             );
         }
@@ -428,7 +433,7 @@ class Maker
                 '{user}:{pass}',
                 AsyncTransport::PLACEHOLDER,
                 (string)RpcTransport::fromArray(
-                    current($this->rpcResponse['servers'])['x-ufo']['transport'][$type] ?? []
+                    current($this->rpcResponse['servers'])[XUfoValuesEnum::CORE->value]['transport'][$type] ?? []
                 )
             );
         } catch (\Throwable) {
@@ -436,5 +441,10 @@ class Maker
         }
     }
 
+    protected function getDtoNameFromRef(mixed $ref): string
+    {
+        $p = explode('/', $ref);
+        return end($p);
+    }
 
 }
