@@ -1,7 +1,7 @@
 {
     "name": "ufo-tech/json-rpc-client-sdk",
     "description": "Simple clientSDK builder for any json-RPC servers",
-    "version": "3.7.0",
+    "version": "3.7.1",
     "license": "MIT",
     "authors": [
         {

@@ -7,9 +7,9 @@ use ReflectionException;
 use Symfony\Component\Validator\Validation;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Ufo\RpcError\AbstractRpcErrorException;
+use Ufo\RpcError\ConstraintsImposedException;
 use Ufo\RpcObject\IRpcSpecialParamHandler;
 use Ufo\RpcObject\RpcResponse;
-use Ufo\RpcObject\Rules\Validator\ConstraintsImposedException;
 use Ufo\RpcObject\Rules\Validator\RpcValidator;
 use Ufo\RpcObject\SpecialRpcParamsEnum;
 use Ufo\RpcSdk\Exceptions\SdkException;
@@ -91,6 +91,14 @@ abstract class AbstractBaseProcedure
     {
         if (!$this->sdkConfigs) {
             $this->sdkConfigs = new SdkConfigs(pathinfo($apiMethodDef->refClass->getFileName())['dirname'] . '/..');
+        }
+
+        if (
+            empty($this->sdkConfigs->getConfigs())
+            && empty($this->sdkConfigs->getConfigs(true))
+            && $parentClass = $apiMethodDef->refClass->getParentClass()
+        ) {
+            $this->sdkConfigs = new SdkConfigs(pathinfo($parentClass->getFileName())['dirname'] . '/..');
         }
     }
 
