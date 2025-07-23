@@ -89,7 +89,7 @@ class DtoClassDefinition extends ClassDefinition
     protected function getItems(string $type, array $schema): string
     {
         $res = $type;
-        if ($type === 'array' && isset($schema['items'])) {
+        if ($type === 'array' && ($schema['items']['$ref'] ?? false)) {
             $parts = explode('/', $schema['items']['$ref']);
             $res = end($parts) . '[]';
         }
