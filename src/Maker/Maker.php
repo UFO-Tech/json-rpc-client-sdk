@@ -335,7 +335,7 @@ class Maker
             try {
                 $schema = $data['schema'] ?? DocHelper::getPath($data, 'schema');
 
-                $type = TypeHintResolver::jsonSchemaToPhp($schema);
+                $type = TypeHintResolver::jsonSchemaToPhp($schema, DtoClassDefinition::FOLDER);
                 $this->addEnums(
                     $type,
                     $schema,
