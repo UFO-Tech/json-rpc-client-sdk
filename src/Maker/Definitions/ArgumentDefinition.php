@@ -2,25 +2,28 @@
 
 namespace Ufo\RpcSdk\Maker\Definitions;
 
+use Ufo\RpcError\RpcDataNotFoundException;
+use Ufo\RpcError\WrongWayException;
+use Ufo\RpcSdk\Maker\Definitions\Configs\TypeConfig;
+use Ufo\RpcSdk\Maker\Helpers\DocHelper;
+
 class ArgumentDefinition
 {
     protected AssertionsDefinition $assertions;
 
+    protected mixed $defaultValue = null;
+
     /**
-     * @param string $name
-     * @param string $type
-     * @param bool $optional
-     * @param mixed|null $defaultValue
-     * @param ?string $assertions
+     * @throws WrongWayException|RpcDataNotFoundException
      */
     public function __construct(
         protected string $name,
-        protected string $type,
+        protected TypeConfig $typeConfig,
         protected bool $optional,
-        protected mixed $defaultValue = null,
         ?string $assertions = null
     )
     {
+        $this->defaultValue = DocHelper::getPath($typeConfig->schema, 'default', strict: false);
         $this->assertions = new AssertionsDefinition($assertions ?? '');
     }
 
@@ -37,7 +40,12 @@ class ArgumentDefinition
      */
     public function getType(): string
     {
-        return $this->type;
+        return $this->typeConfig->type;
+    }
+
+    public function getTypeDescription(): string
+    {
+        return $this->typeConfig->typeDoc ?? $this->getType();
     }
 
     /**

@@ -2,7 +2,9 @@
 
 namespace Ufo\RpcSdk\Maker\Definitions;
 
-use function array_map;
+use Ufo\RpcSdk\Maker\Definitions\Configs\ResultConfig;
+use Ufo\RpcSdk\Maker\Helpers\ParamToStringConverter;
+
 use function array_unique;
 use function count;
 use function implode;
@@ -16,24 +18,21 @@ class MethodDefinition
      * @var ArgumentDefinition[]
      */
     protected array $arguments = [];
-    protected array $returns = [];
+    protected string $returns = '';
+
+    protected ResultConfig $resultConfig;
 
     protected static array $typesExclude = [];
 
     protected string $returnsDoc;
+    protected string $returnsDesc;
 
     protected array $uses = [];
 
-    /**
-     * @param string $name
-     * @param string $apiProcedure
-     */
     public function __construct(
         protected string $name,
         protected string $apiProcedure,
-    )
-    {
-    }
+    ) {}
 
     public function addArgument(ArgumentDefinition $argument): void
     {
@@ -68,19 +67,20 @@ class MethodDefinition
             if ($withAttr && count($argument->getAssertions()) > 0) {
 
                 $args[$name] .= PHP_EOL . $argument->getAssertions()->getSignature() . str_pad('', 8);
-                $this->uses[] = $argument->getAssertions()->getClass();
+                $this->uses[] = $argument->getAssertions()->getClassFQCN();
             }
-            $args[$name] .= $argument->getType() . ' $' . $name;
+            $type = $withAttr ? $argument->getType() : $argument->getTypeDescription();
+            $args[$name] .= $type . ' $' . $name;
             if ($argument->isOptional()) {
                 $value = ParamToStringConverter::defaultValue($argument->getDefaultValue());
                 $args[$name] .= ' = ' . $value;
             }
         }
-        $br = $withAttr && count($args) > 1 ? PHP_EOL : '';
+        $br = $withAttr ? PHP_EOL : '';
 
         return implode(', '.$br.str_pad('', 8) , $args)
                .$br
-               .($withAttr && count($args) > 1 ? str_pad('', 4) : '');
+               .($withAttr ? str_pad('', 4) : '');
     }
 
     /**
@@ -91,19 +91,6 @@ class MethodDefinition
         return array_unique($this->uses);
     }
 
-    public static function normalizeType(string $type): string
-    {
-        return self::$typesExclude[$type] ?? match ($type) {
-            'any', 'mixed' => 'mixed',
-            'arr', 'array' => 'array',
-            'boolean', 'true', 'false' => 'bool',
-            'dbl', 'double', 'float' => 'float',
-            'integer', 'int' => 'int',
-            'nil', 'null', 'void' => 'null',
-            'string', 'str' => 'string',
-            default   => 'object'
-        };
-    }
     /**
      * @return string
      */
@@ -112,10 +99,7 @@ class MethodDefinition
         return $this->name;
     }
 
-    /**
-     * @return array
-     */
-    public function getReturns(): array
+    public function getReturns(): string
     {
         return $this->returns;
     }
@@ -125,29 +109,25 @@ class MethodDefinition
      */
     public function getReturnsDoc(): string
     {
-        return $this->returnsDoc;
+        return str_replace('[]', '', $this->returnsDoc);
     }
 
-    /**
-     * @param array|string $returns
-     * @param string|null $returnsDoc
-     * @return void
-     */
-    public function setReturns(array|string $returns, ?string $returnsDoc = null): void
+    public function setReturns(ResultConfig $returns): void
     {
-        if (is_array($returns)) {
-            $returns = array_column($returns['oneOf'], 'type');
-            $this->returns = array_unique(array_map(function ($v) {
-                return MethodDefinition::normalizeType($v);
-            }, $returns));
-        } else {
-            $this->returns = [MethodDefinition::normalizeType($returns)];
-        }
-        if (is_null($returnsDoc)) {
-            $this->returnsDoc = implode('|', $this->returns);
-        } else {
-            $this->returnsDoc = $returnsDoc;
-        }
+        $this->resultConfig = $returns;
+        $this->returns = $returns->type;
+        $this->returnsDoc = ($returns->typeDoc ?? '');
+        $this->returnsDesc = ($returns->typeDoc ?? '') . ' ' . ($returns->description ?? '');
+    }
+
+    public function getReturnsDesc(): string
+    {
+        return $this->returnsDesc;
+    }
+
+    public function getResultConfig(): ResultConfig
+    {
+        return $this->resultConfig;
     }
 
     /**

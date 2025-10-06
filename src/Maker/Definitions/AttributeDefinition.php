@@ -15,23 +15,22 @@ use const PHP_EOL;
 
 abstract class AttributeDefinition
 {
-
     protected array $constructorProperties = [];
 
-    public function __construct(protected string $class, protected array $context = [])
+    public function __construct(protected string $classFQCN, protected array $context = [])
     {
-        if (!class_exists($this->class)) {
+        if (!class_exists($this->classFQCN)) {
             throw new WrongWayException();
         }
-        $reflection = new ReflectionClass($this->class);
+        $reflection = new ReflectionClass($this->classFQCN);
         foreach ($reflection->getConstructor()->getParameters() as $paramReflection) {
             $this->constructorProperties[$paramReflection->getName()] = $paramReflection;
         }
     }
 
-    public function getClass(): string
+    public function getClassFQCN(): string
     {
-        return $this->class;
+        return $this->classFQCN;
     }
 
     abstract protected function buildSignature(int $tab = 2): array;
@@ -40,7 +39,7 @@ abstract class AttributeDefinition
     {
         $signature = str_pad(' ', $tab * 4);
         $signature .= '#[';
-        $signature .= $this->getShortClassname();
+        $signature .= $this->getShortName();
 
         $specific = $this->buildSignature($tab + 1);
         $signature .= count($specific) > 0 ? '(' : '';
@@ -56,9 +55,9 @@ abstract class AttributeDefinition
         return $this->getSignature();
     }
 
-    public function getShortClassname(): string
+    public function getShortName(): string
     {
-        $n = explode('\\', $this->class);
+        $n = explode('\\', $this->classFQCN);
         return end($n);
     }
 }

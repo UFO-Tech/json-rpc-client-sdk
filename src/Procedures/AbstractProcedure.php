@@ -74,7 +74,7 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
         );
         RequestResponseStack::addRequest(RpcRequest::fromArray($apiMethodDef->body), $headers);
         try {
-            $response = ResponseCreator::fromJson($request->getContent());
+            $response = SdkResponseCreator::fromApiResponse($request->getContent(), $apiMethodDef);
             RequestResponseStack::addResponse($response);
             $response->throwError();
 

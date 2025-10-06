@@ -1,6 +1,6 @@
 <?php
 
-namespace Ufo\RpcSdk\Maker\Definitions;
+namespace Ufo\RpcSdk\Maker\Helpers;
 
 use function is_array;
 use function is_bool;

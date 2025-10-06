@@ -30,7 +30,7 @@ foreach ($methods as $name => $method) {
 if ($args) {
     foreach (explode(', ', $args) as $arg) {
 ?>
-    * @param <?= $arg . PHP_EOL ?>
+    * @param <?= trim($arg) . PHP_EOL ?>
 <?php
     }
 }

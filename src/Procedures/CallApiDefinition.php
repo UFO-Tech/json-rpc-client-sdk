@@ -7,7 +7,6 @@ use ReflectionMethod;
 
 readonly class CallApiDefinition
 {
-
     public function __construct(
         public ReflectionClass $refClass,
         public ReflectionMethod $refMethod,

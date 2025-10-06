@@ -2,23 +2,22 @@
 
 namespace Ufo\RpcSdk\Maker\Definitions;
 
-use JetBrains\PhpStorm\Pure;
+use Ufo\RpcSdk\Maker\Interfaces\IClassLikeDefinition;
+use Ufo\RpcSdk\Maker\Interfaces\IHaveMethodsDefinitions;
+use Ufo\RpcSdk\Maker\Traits\ClassDefinitionsMethodsHolderTrait;
 
 use function array_map;
 use function array_merge;
 use function array_unique;
 
-class ClassDefinition
+class ClassDefinition implements IClassLikeDefinition, IHaveMethodsDefinitions
 {
+    use ClassDefinitionsMethodsHolderTrait;
+
     /**
      * @var MethodDefinition[]
      */
     protected array $methods = [];
-
-    /**
-     * @var array ['name' => 'type']
-     */
-    protected array $properties = [];
 
     /**
      * @param string $namespace
@@ -26,10 +25,14 @@ class ClassDefinition
      * @param bool $async
      */
     public function __construct(
-        protected string $namespace,
-        protected string $className,
+        string $namespace,
+        string $className,
         readonly public bool $async = false
-    ) {}
+    )
+    {
+        $this->className = $className;
+        $this->namespace = $namespace;
+    }
 
     /**
      * @return MethodDefinition[]
@@ -49,59 +52,9 @@ class ClassDefinition
         return array_unique($uses);
     }
 
-    /**
-     * @param MethodDefinition $method
-     */
-    public function addMethod(MethodDefinition $method): void
+    public function addMethod(MethodDefinition $method): static
     {
         $this->methods[$method->getName()] = $method;
+        return $this;
     }
-
-    /**
-     * @return array
-     */
-    public function getProperties(): array
-    {
-        return $this->properties;
-    }
-
-    /**
-     * @param array $properties
-     */
-    public function setProperties(array $properties): void
-    {
-        if (isset($properties[0]) && is_array($properties[0])) {
-            $properties = $properties[0];
-        }
-        $this->properties = $properties;
-    }
-
-    /**
-     * @return string
-     */
-    public function getNamespace(): string
-    {
-        return $this->namespace;
-    }
-
-    /**
-     * @return string
-     */
-    public function getClassName(): string
-    {
-        return $this->className;
-    }
-
-    #[Pure] public function getFullName(): string
-    {
-        return $this->getNamespace() . '\\' . $this->getClassName();
-    }
-
-    public static function toUpperCamelCase($string): string
-    {
-        $words = preg_split('/[\s_\-]+/', $string);
-        $upperCamelCase = array_map('ucfirst', $words);
-        return implode('', $upperCamelCase);
-    }
-
 }

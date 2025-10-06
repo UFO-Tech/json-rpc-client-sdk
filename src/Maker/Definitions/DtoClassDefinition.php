@@ -2,14 +2,21 @@
 
 namespace Ufo\RpcSdk\Maker\Definitions;
 
+use Ufo\DTO\Helpers\EnumResolver;
 use Ufo\DTO\Helpers\TypeHintResolver;
+use Ufo\RpcSdk\Maker\Definitions\Configs\ParamConfig;
+use Ufo\RpcSdk\Maker\Interfaces\IClassLikeDefinition;
+use Ufo\RpcSdk\Maker\Traits\ClassDefinitionsMethodsHolderTrait;
 
 use function end;
 use function explode;
-use function implode;
 
-class DtoClassDefinition extends ClassDefinition
+class DtoClassDefinition implements IClassLikeDefinition
 {
+    use ClassDefinitionsMethodsHolderTrait;
+
+    const string TYPE_CLASS = 'DTO';
+
     const string FOLDER = 'DTO';
 
     protected array $docs = [];
@@ -19,24 +26,12 @@ class DtoClassDefinition extends ClassDefinition
      * @param string $className
      */
     public function __construct(
-        protected string $namespace,
-        protected string $className
+        string $namespace,
+        string $className
     )
     {
-        parent::__construct($this->namespace, $this->className);
-    }
-
-    public static function dtoWithNamespace(string $dtoName, bool $collection = false): string
-    {
-        return static::FOLDER . '\\' . $dtoName . ($collection ? '[]' : '');
-    }
-
-    /**
-     * @return array
-     */
-    public function getProperties(): array
-    {
-        return $this->properties;
+        $this->className = $className;
+        $this->namespace = $namespace;
     }
 
     public function getDocs(): array
@@ -45,54 +40,17 @@ class DtoClassDefinition extends ClassDefinition
     }
 
     /**
-     * @param array $properties
+     * @param ParamConfig[] $properties
      */
     public function setProperties(array $properties): void
     {
-        foreach ($properties as $name => $schema) {
-            if ($schema['$ref'] ?? false) {
-                $parts = explode('/', $schema['$ref']);
-
-                $this->properties[$name] = end($parts);
-                continue;
+        foreach ($properties as $paramConfig) {
+            $name = $paramConfig->name;
+            if ($paramConfig->typeConfig->typeDoc !== $paramConfig->typeConfig->type) {
+                $this->docs[$name] = $paramConfig->typeConfig->typeDoc;
             }
-
-            if ($schema['oneOf'] ?? false) {
-                $propertyTypes = [];
-                $docTypes = [];
-                foreach ($schema['oneOf'] as $type) {
-                    if ($type['$ref'] ?? false) {
-                        $parts = explode('/', $type['$ref']);
-                        $realType = end($parts);
-                    } else {
-                        $realType = TypeHintResolver::jsonSchemaToPhp($type['type']);
-                    }
-                    $propertyTypes[] = $realType;
-                    $docTypes[] = $this->getItems($realType, $type);
-                }
-                if ($docTypes !== $propertyTypes) {
-                    $this->docs[$name] = implode('|', $docTypes);
-                }
-                $this->properties[$name] = implode('|', $propertyTypes);
-            } else {
-                $realType = TypeHintResolver::jsonSchemaToPhp($schema);
-                $docType = $this->getItems($realType, $schema);
-                if ($docType !== $realType) {
-                    $this->docs[$name] = $docType;
-                }
-                $this->properties[$name] = TypeHintResolver::jsonSchemaToPhp($schema);
-            }
-
+            $this->properties[$name] = $paramConfig->typeConfig->type;
         }
-    }
 
-    protected function getItems(string $type, array $schema): string
-    {
-        $res = $type;
-        if ($type === 'array' && ($schema['items']['$ref'] ?? false)) {
-            $parts = explode('/', $schema['items']['$ref']);
-            $res = end($parts) . '[]';
-        }
-        return $res;
     }
 }

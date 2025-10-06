@@ -2,34 +2,26 @@
 
 namespace Ufo\RpcSdk\Maker\Definitions;
 
-use JetBrains\PhpStorm\Pure;
-use Ufo\RpcSdk\Maker\StringTransformerEnum;
+use Ufo\DTO\VO\EnumVO;
+use Ufo\RpcSdk\Maker\Interfaces\IClassLikeDefinition;
+use Ufo\RpcSdk\Maker\Traits\ClassDefinitionsMethodsHolderTrait;
 
-class EnumDefinition
+class EnumDefinition implements IClassLikeDefinition
 {
+    use ClassDefinitionsMethodsHolderTrait;
 
+    const string TYPE_CLASS = 'enum';
     const string FOLDER = 'Enums';
 
     protected array $values = [];
 
     public function __construct(
-        protected string $namespace,
-        protected string $enumName,
-        protected string $type,
-        array $values,
+        string $namespace,
+        protected EnumVO $enumConfig,
     )
     {
-        foreach ($values as $key => $value) {
-            if (is_int($key)) {
-                $key = StringTransformerEnum::transformName($value);
-            }
-            $this->values[$key] = $value;
-        }
-    }
-
-    public function enumWithNamespace(): string
-    {
-        return static::FOLDER . '\\' . $this->enumName;
+        $this->className = $enumConfig->name;
+        $this->namespace = $namespace;
     }
 
     /**
@@ -37,27 +29,11 @@ class EnumDefinition
      */
     public function getCases(): array
     {
-        return $this->values;
-    }
-
-    public function getNamespace(): string
-    {
-        return $this->namespace;
-    }
-
-    public function getEnumName(): string
-    {
-        return $this->enumName;
+        return $this->enumConfig->values;
     }
 
     public function getType(): string
     {
-        return $this->type;
+        return $this->enumConfig->type->value;
     }
-
-    #[Pure] public function getFullName(): string
-    {
-        return $this->getNamespace() . '\\' . $this->getEnumName();
-    }
-
 }
