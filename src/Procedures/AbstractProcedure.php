@@ -11,10 +11,11 @@ use Ufo\RpcError\AbstractRpcErrorException;
 use Ufo\RpcObject\IRpcSpecialParamHandler;
 use Ufo\RpcObject\RpcRequest;
 use Ufo\RpcObject\RpcResponse;
-use Ufo\RpcObject\Transformer\ResponseCreator;
 use Ufo\RpcSdk\Exceptions\ConfigNotFoundException;
 use Ufo\RpcSdk\Exceptions\SdkException;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
+use Ufo\RpcSdk\Procedures\ResponseTransformer\Interfaces\IResponseHandler;
+use Ufo\RpcSdk\Procedures\ResponseTransformer\SdkResponseCreator;
 
 use function end;
 use function explode;
@@ -28,6 +29,8 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
      * @param string $rpcVersion
      * @param HttpClientInterface|null $httpClient
      * @param array $httpRequestOptions
+     * @param IRpcSpecialParamHandler|null $rpcSpecialParams
+     * @param IResponseHandler[] $handlers
      */
     public function __construct(
         protected array $headers = [],
@@ -35,7 +38,8 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
         string $rpcVersion = self::DEFAULT_RPC_VERSION,
         protected ?HttpClientInterface $httpClient = null,
         array $httpRequestOptions = [],
-        ?IRpcSpecialParamHandler $rpcSpecialParams = null
+        ?IRpcSpecialParamHandler $rpcSpecialParams = null,
+        protected iterable $handlers = []
     )
     {
         parent::__construct($requestId, $rpcVersion, $rpcSpecialParams);
@@ -74,7 +78,11 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
         );
         RequestResponseStack::addRequest(RpcRequest::fromArray($apiMethodDef->body), $headers);
         try {
-            $response = SdkResponseCreator::fromApiResponse($request->getContent(), $apiMethodDef);
+            $response = SdkResponseCreator::fromApiResponse(
+                $request->getContent(),
+                $apiMethodDef,
+                $this->handlers
+            );
             RequestResponseStack::addResponse($response);
             $response->throwError();
 

@@ -40,6 +40,11 @@ class Maker
         }
     }
 
+    public function getClasses(): array
+    {
+        return $this->classes;
+    }
+
     public function __destruct()
     {
         $this->generator->writeChanges();

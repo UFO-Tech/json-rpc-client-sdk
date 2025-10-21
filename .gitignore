@@ -27,3 +27,5 @@
 /composer.lock
 /bin/test.php
 /MakefileCustom
+/bin/schema.json
+/.phpunit.cache/

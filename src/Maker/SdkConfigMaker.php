@@ -20,7 +20,7 @@ class SdkConfigMaker implements IMaker
 {
     const string AUTOLOAD_PSR4 = '/vendor/composer/autoload_psr4.php';
 
-    protected SdkConfigs $sdkConfigs;
+    readonly public SdkConfigs $sdkConfigs;
 
     public function __construct(
         readonly public ConfigsHolder $configsHolder,

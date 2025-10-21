@@ -109,7 +109,7 @@ class MethodDefinition
      */
     public function getReturnsDoc(): string
     {
-        return str_replace('[]', '', $this->returnsDoc);
+        return $this->returnsDoc;
     }
 
     public function setReturns(ResultConfig $returns): void
