@@ -28,7 +28,7 @@ foreach ($methods as $name => $method) {
     *
 <?php
 if ($args) {
-    foreach (explode(', ', $args) as $arg) {
+    foreach (explode('|', $args) as $arg) {
 ?>
     * @param <?= trim($arg) . PHP_EOL ?>
 <?php

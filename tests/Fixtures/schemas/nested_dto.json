@@ -1,0 +1,50 @@
+{
+    "openrpc": "1.3.2",
+    "info": {
+        "title": "Nested DTO API",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8083/api",
+            "name": "Nested Server"
+        }
+    ],
+    "methods": [
+        {
+            "name": "UserProfile.get",
+            "params": [
+                { "name": "userId", "required": true, "schema": { "type": "integer" } }
+            ],
+            "result": {
+                "name": "App\\Api\\DTO\\UserProfileDTO",
+                "schema": { "$ref": "#/components/schemas/UserProfileDTO" }
+            }
+        }
+    ],
+    "components": {
+        "schemas": {
+            "UserProfileDTO": {
+                "type": "object",
+                "properties": {
+                    "user": { "$ref": "#/components/schemas/UserDTO" },
+                    "address": { "$ref": "#/components/schemas/AddressDTO" }
+                }
+            },
+            "UserDTO": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "integer" },
+                    "name": { "type": "string" }
+                }
+            },
+            "AddressDTO": {
+                "type": "object",
+                "properties": {
+                    "city": { "type": "string" },
+                    "street": { "type": "string" }
+                }
+            }
+        }
+    }
+}

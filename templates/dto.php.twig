@@ -18,7 +18,7 @@ class <?= $class_name_full ?> implements IArrayConvertible, IArrayConstructible<
 foreach ($properties as $name => $type) {
 ?>
 <?= ($propertiesDocs[$name] ?? false) ? PHP_EOL . "    /** @var " . $propertiesDocs[$name] . " */" . PHP_EOL : ''; ?>
-    public <?=$type?> $<?=$name?>;
+    public <?=$type?> $<?=$name?><?= $propertiesDefaults[$name] ?? '' ?>;
 <?php
 }
 foreach ($methods as $name => $method) {

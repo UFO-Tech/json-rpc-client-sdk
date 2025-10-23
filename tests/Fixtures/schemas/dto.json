@@ -1,0 +1,38 @@
+{
+    "openrpc": "1.3.2",
+    "info": {
+        "title": "DTO Demo API",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8081/api",
+            "name": "DTO Server"
+        }
+    ],
+    "methods": [
+        {
+            "name": "User.get",
+            "params": [
+                { "name": "id", "required": true, "schema": { "type": "integer" } }
+            ],
+            "result": {
+                "name": "App\\Api\\DTO\\UserDTO",
+                "schema": { "$ref": "#/components/schemas/UserDTO" }
+            }
+        }
+    ],
+    "components": {
+        "schemas": {
+            "UserDTO": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "integer" },
+                    "name": { "type": "string" },
+                    "email": { "type": "string" }
+                },
+                "required": ["id", "name"]
+            }
+        }
+    }
+}

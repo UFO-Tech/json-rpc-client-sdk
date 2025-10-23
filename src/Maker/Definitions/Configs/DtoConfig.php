@@ -8,21 +8,26 @@ use function array_map;
 readonly class DtoConfig
 {
     /**
-     * @param ParamConfig[] $params
+     * @var ParamConfig[]
      */
+    public array $params;
+
     public function __construct(
         public string $name,
-        public array $params,
-    ) {}
+        array $params,
+    )
+    {
+        $this->params =  array_map(
+            fn(array $property) => ParamConfig::fromArray($this, $property, false),
+            $params
+        );
+    }
 
     public static function fromArray(string $paramName, array $properties) :static
     {
         return new static(
             $paramName,
-            array_map(
-                fn(array $property) => ParamConfig::fromArray($property, false),
-                $properties
-            )
+            $properties
         );
     }
 

@@ -1,0 +1,23 @@
+{
+    "openrpc": "1.3.2",
+    "info": {
+        "title": "Simple API",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8080/api",
+            "name": "Simple Server"
+        }
+    ],
+    "methods": [
+        {
+            "name": "test",
+            "params": [],
+            "result": {
+                "name": "complete",
+                "schema": { "type": "string" }
+            }
+        }
+    ]
+}

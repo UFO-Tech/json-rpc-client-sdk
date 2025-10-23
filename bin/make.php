@@ -29,8 +29,8 @@ echo CliColor::RESET->value;
 
 try {
 
-    $docReader = new HttpReader($apiUrl);
-//    $docReader = new FileReader(__DIR__.'/schema.json');
+//    $docReader = new HttpReader($apiUrl);
+    $docReader = new FileReader(__DIR__.'/schema.json');
 
 
     $configHolder = new ConfigsHolder(
@@ -39,7 +39,7 @@ try {
         apiVendorAlias: $vendorName,
         namespace: ConfigsHolder::DEFAULT_NAMESPACE, // 'Ufo\RpcSdk\Client'
         urlInAttr: false,
-        cacheLifeTimeSecond: ConfigsHolder::DEFAULT_CACHE_LIFETIME,
+        cacheLifeTimeSecond: 1 //ConfigsHolder::DEFAULT_CACHE_LIFETIME,
     );
     $generator = new Generator(
         new FileManager(
@@ -57,8 +57,8 @@ try {
         configsHolder: $configHolder,
         generator: $generator,
         makers: [
-            new SdkDtoMaker($configHolder, $generator),
             new SdkEnumMaker($configHolder, $generator),
+            new SdkDtoMaker($configHolder, $generator),
             new SdkProcedureMaker($configHolder, $generator),
             new SdkConfigMaker($configHolder, $generator),
         ]
@@ -72,7 +72,7 @@ try {
         if (count($classDefinition->getProperties()) > 0) {
             foreach ($classDefinition->getProperties() as $name => $property) {
                 echo CliColor::CYAN->value
-                     . 'public ' . $property . ' $' . $name
+                     . 'public ' . $property . ' $' . $name . ($classDefinition->getDefaultValues()[$name] ?? '')
                      . PHP_EOL;
             }
         }

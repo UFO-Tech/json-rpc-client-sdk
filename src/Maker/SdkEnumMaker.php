@@ -2,8 +2,11 @@
 
 namespace Ufo\RpcSdk\Maker;
 
+use BackedEnum;
 use Exception;
 use Symfony\Bundle\MakerBundle\Generator;
+use Throwable;
+use TypeError;
 use Ufo\DTO\DTOTransformer;
 use Ufo\DTO\Helpers\EnumResolver;
 use Ufo\DTO\Helpers\TypeHintResolver;
@@ -13,14 +16,17 @@ use Ufo\RpcSdk\Maker\Definitions\Configs\ConfigsHolder;
 use Ufo\RpcSdk\Maker\Definitions\Configs\ParamConfig;
 use Ufo\RpcSdk\Maker\Definitions\EnumDefinition;
 use Ufo\RpcSdk\Maker\Helpers\ClassHelper;
+use Ufo\RpcSdk\Maker\Helpers\ParamToStringConverter;
 use Ufo\RpcSdk\Maker\Interfaces\IClassLikeStackHolder;
 use Ufo\RpcSdk\Maker\Interfaces\IMaker;
 use Ufo\RpcSdk\Maker\Traits\ClassLikeStackHolderTrait;
 use Ufo\RpcSdk\Maker\Traits\ProcessCallbackTrait;
 
 use function array_filter;
+use function array_find;
 use function array_map;
 use function array_merge;
+use function array_search;
 use function implode;
 use function md5;
 use function preg_replace;
@@ -60,6 +66,7 @@ class SdkEnumMaker implements IMaker, IClassLikeStackHolder
             );
             if (EnumResolver::schemaHasEnum($procedureData->result->schema)) {
                 $prepared[] = new ParamConfig(
+                    $procedureData,
                     'return',
                     $procedureData->result
                 );
@@ -68,7 +75,7 @@ class SdkEnumMaker implements IMaker, IClassLikeStackHolder
         foreach ($this->configsHolder->getDtos() as $dtoName => $dtoConfig) {
             foreach ($dtoConfig->params as $param) {
                 if (EnumResolver::schemaHasEnum($param->typeConfig->schema)) {
-                    $prepared[] = new ParamConfig($param->name, $param->typeConfig);
+                    $prepared[] = new ParamConfig($dtoConfig, $param->name, $param->typeConfig);
                 }
             }
         }
@@ -106,31 +113,61 @@ class SdkEnumMaker implements IMaker, IClassLikeStackHolder
         }
     }
 
-    protected function createEnum(EnumVO $enumConfig, ParamConfig $paramConfig, ?callable $callbackOutput = null): EnumDefinition
+    protected function createEnum(EnumVO $enumConfig, ParamConfig $paramConfig, ?callable $callbackOutput = null):
+EnumDefinition
     {
-        $hash = md5(implode(',', $enumConfig->values));
+        $config = $this->configsHolder;
+        $namespace = $config->namespace . '\\' . $config->apiVendorAlias . '\\' .EnumDefinition::FOLDER;
+        $enumName = $enumConfig->name;
 
         try {
-            $enumDef = $this->getFromStack($hash);
+            $enumDef = $this->getFromStack($namespace . '\\' . $enumName);
         } catch (SdkBuilderException) {
             $enumDef = new EnumDefinition(
-                $this->configsHolder->namespace . '\\' . $this->configsHolder->apiVendorAlias . '\\' . EnumDefinition::FOLDER,
+                $namespace,
                 $enumConfig
             );
             ClassHelper::removePreviousClass($enumDef->getFQCN());
-            $this->addToStack($enumDef, $hash);
+            $this->addToStack($enumDef, $namespace . '\\' . $enumName);
 
             $this->processCallback($enumDef, $callbackOutput);
         }
 
+        $enumWithNS = EnumDefinition::FOLDER . '\\' . $enumDef->getShortName();
+
+        if ($defaultValue = $paramConfig->typeConfig->schema['default'] ?? false) {
+            try {
+                $defaultValue = $this->changeDefaultValueToEnum($enumConfig, $defaultValue, $enumWithNS);
+            } catch (Throwable) {
+                if (is_array($defaultValue)) {
+                    $defaultValue = $this->changeDefaultValuesToEnums($enumConfig, $defaultValue, $enumWithNS);
+                }
+            }
+            $config->addDefaultValueForParam($paramConfig, $defaultValue);
+        }
+
         $paramConfig->assertions = preg_replace(
             static::CALLBACK_REGEX,
-            'callback: [' . EnumDefinition::FOLDER . '\\' . $enumDef->getShortName() . '::class, \'values\']',
+            'callback: [' . $enumWithNS . '::class, \'values\']',
             $paramConfig->assertions ?? ''
         );
         if (str_contains($paramConfig->typeConfig->typeDoc, EnumDefinition::FOLDER)) {
             $paramConfig->assertions = '';
         }
         return $enumDef;
+    }
+
+    protected function changeDefaultValueToEnum(EnumVO $enumConfig, string|int $defaultValue, string $enumWithNS): string
+    {
+        $case = array_search($defaultValue, $enumConfig->values);
+        return $enumWithNS . '::' . $case;
+    }
+
+    protected function changeDefaultValuesToEnums(EnumVO $enumConfig, array $defaultValues, string $enumWithNS): array
+    {
+        return array_map(
+            fn($value) => $this->changeDefaultValueToEnum($enumConfig, $value, $enumWithNS),
+            $defaultValues
+        );
     }
 }

@@ -9,6 +9,8 @@ use Ufo\RpcObject\Transformer\ResponseCreator;
 use Ufo\RpcSdk\Procedures\CallApiDefinition;
 use Ufo\RpcSdk\Procedures\ResponseTransformer\Interfaces\IResponseHandler;
 
+use function is_array;
+
 class SdkResponseCreator extends ResponseCreator
 {
     protected static array $instances = [];
@@ -42,7 +44,14 @@ class SdkResponseCreator extends ResponseCreator
     {
         $rpcResponse = parent::fromJson($json);
         $instance = static::$instances[$apiDefinition->method->method] ??= new static($apiDefinition, $handlers);
-        $result = $instance->process($rpcResponse->getResult(true));
+
+        if (!$rpcResponse->getError()) {
+            $result = $instance->resolveResultTransform(
+                $instance->resultSchema,
+                $rpcResponse->getResult(true)
+            );
+        }
+
 
         return new RpcResponse(
             $rpcResponse->getId(),
@@ -53,23 +62,21 @@ class SdkResponseCreator extends ResponseCreator
             $rpcResponse->getCacheInfo(),
         );
     }
-    protected function process(mixed $data): mixed
-    {
-        T::filterSchema($this->resultSchema, function (array $schema, array $parentSchema) use (&$result, &$data) {
-            if (!$result) $data = $this->resolveResultTransform($schema, $parentSchema, $data);
-        });
-        return $data;
-    }
 
-    protected function resolveResultTransform(array $schema, array $parent, mixed $result): mixed
+    protected function resolveResultTransform(array $schema, mixed $data): mixed
     {
+        $result = $data;
         foreach ($this->handlers as $handler) {
-            if ($handler->canHandle($schema, $parent)) {
-                $result = $handler->handle($schema, $parent, $result, $this);
+            if ($handler->canHandle($schema)) {
+                $result = $handler->handle(
+                    $schema,
+                    $data,
+                    fn(array $s, mixed $d) => $this->resolveResultTransform($s, $d),
+                    $this
+                );
                 break;
             }
         }
         return $result;
     }
-
 }

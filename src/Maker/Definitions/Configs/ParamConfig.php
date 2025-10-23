@@ -11,13 +11,15 @@ use function strtolower;
 class ParamConfig
 {
     public function __construct(
+        readonly public DtoConfig|ProcedureConfig $parentConfig,
         readonly public string $name,
         readonly public TypeConfig $typeConfig,
         readonly public bool $required = true,
-        public ?string $assertions = null
+        public ?string $assertions = null,
+        public mixed $defaultValue = null,
     ) {}
 
-    public static function fromArray(array $param, bool $inProcedure = true) :static
+    public static function fromArray(DtoConfig|ProcedureConfig $parentConfig, array $param, bool $inProcedure = true) :static
     {
         $namespaces = [
             strtolower(EnumDefinition::TYPE_CLASS) => EnumDefinition::FOLDER,
@@ -26,10 +28,12 @@ class ParamConfig
             $namespaces[strtolower(DtoClassDefinition::TYPE_CLASS)] = DtoClassDefinition::FOLDER;
         }
         return new static(
-            $param['name'],
-            TypeConfig::fromArray($param, $namespaces),
-            $param['required'] ?? true,
-            $param['x-ufo-assertions'] ?? null,
+            parentConfig: $parentConfig,
+            name: $param['name'],
+            typeConfig: TypeConfig::fromArray($param, $namespaces),
+            required: $param['required'] ?? true,
+            assertions: $param['x-ufo-assertions'] ?? null,
+            defaultValue: $param['schema']['default'] ?? null,
         );
     }
 

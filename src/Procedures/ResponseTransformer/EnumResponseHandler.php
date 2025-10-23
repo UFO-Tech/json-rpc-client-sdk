@@ -3,24 +3,37 @@
 namespace Ufo\RpcSdk\Procedures\ResponseTransformer;
 
 use Ufo\DTO\DTOTransformer;
+use Ufo\DTO\Exceptions\BadParamException;
 use Ufo\DTO\Helpers\EnumResolver;
-use Ufo\DTO\Helpers\TypeHintResolver as T;
+use Ufo\RpcSdk\Procedures\ResponseTransformer\Exceptions\SdkResponseHandlerException;
 use Ufo\RpcSdk\Procedures\ResponseTransformer\Interfaces\IResponseHandler;
 use Ufo\RpcSdk\Procedures\ResponseTransformer\Traits\EnumNameExtractorTrait;
+use UnitEnum;
 
 class EnumResponseHandler implements IResponseHandler
 {
     use EnumNameExtractorTrait;
 
-    public function handle(array $schema, array $parent, mixed $result, SdkResponseCreator $creator): mixed
+    /**
+     * @throws SdkResponseHandlerException
+     */
+    public function handle(array $schema, mixed $result, callable $transform, SdkResponseCreator $creator): UnitEnum
     {
-        $class = $this->getEnumName($schema, $creator->namespace);
-        return DTOTransformer::transformEnum($class, $result);
+        try {
+            $class = $this->getEnumName($schema, $creator->namespace);
+            $result = DTOTransformer::transformEnum($class, $result);
+            if (!$result instanceof UnitEnum) {
+                throw new BadParamException('Value: ' . $result . ' not transform to enum: ' . $class);
+            }
+            return $result;
+        } catch (BadParamException $e) {
+            throw new SdkResponseHandlerException($e->getMessage(), previous: $e);
+        }
     }
 
-    public function canHandle(array $schema, array $parent): bool
+    public function canHandle(array $schema): bool
     {
-        return (EnumResolver::schemaHasEnum($schema)) && !isset($parent[T::ITEMS]) && !isset($parent[T::ONE_OFF]);
+        return isset($schema[EnumResolver::ENUM]) || isset($schema[EnumResolver::ENUM_KEY]);
     }
 
 }

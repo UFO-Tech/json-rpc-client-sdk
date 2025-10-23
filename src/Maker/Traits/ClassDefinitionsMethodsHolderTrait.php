@@ -2,6 +2,8 @@
 
 namespace Ufo\RpcSdk\Maker\Traits;
 
+use Ufo\RpcSdk\Maker\Helpers\ParamToStringConverter;
+
 use function is_array;
 
 trait ClassDefinitionsMethodsHolderTrait
@@ -9,9 +11,14 @@ trait ClassDefinitionsMethodsHolderTrait
     protected string $namespace;
     protected string $className;
     /**
-     * @var array ['name' => 'type']
+     * @var array<string, string> ['name' => 'type']
      */
     protected array $properties = [];
+
+    /**
+     * @var array<string, string> ['name' => 'value']
+     */
+    protected array $defaultValues = [];
 
     public function getNamespace(): string
     {
@@ -39,5 +46,16 @@ trait ClassDefinitionsMethodsHolderTrait
             $properties = $properties[0];
         }
         $this->properties = $properties;
+    }
+
+    public function getDefaultValues(): array
+    {
+        return $this->defaultValues;
+    }
+
+    public function addDefaultValue(string $name, mixed $defaultValue): static
+    {
+        $this->defaultValues[$name] = ' = ' . ParamToStringConverter::defaultValue($defaultValue);;
+        return $this;
     }
 }

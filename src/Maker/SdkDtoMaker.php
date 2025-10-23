@@ -57,7 +57,8 @@ class SdkDtoMaker implements IMaker, IClassLikeStackHolder
                         $this->configsHolder->apiVendorAlias,
                         DtoClassDefinition::FOLDER
                     ),
-                    $className
+                    $className,
+                    $this->configsHolder,
                 );
 
                 try {
@@ -87,6 +88,7 @@ class SdkDtoMaker implements IMaker, IClassLikeStackHolder
                         'extends' => '',
                         'methods' => [],
                         'propertiesDocs' => $classDefinition->getDocs(),
+                        'propertiesDefaults' => $classDefinition->getDefaultValues(),
                         'properties' => $classDefinition->getProperties(),
                         'tab' => function (int $count = 1) {
                             return str_repeat(' ', 4 * $count);

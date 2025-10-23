@@ -1,0 +1,36 @@
+{
+    "openrpc": "1.3.2",
+    "info": {
+        "title": "Enum Demo API",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8082/api",
+            "name": "Enum Server"
+        }
+    ],
+    "methods": [
+        {
+            "name": "Status.getName",
+            "params": [
+                {
+                    "name": "status",
+                    "required": true,
+                    "schema": {
+                        "type": "integer",
+                        "x-ufo-enum": {
+                            "name": "StatusEnum",
+                            "values": { "NEW": 0, "SENT": 1, "RECEIVED": 2 }
+                        },
+                        "enum": [0, 1, 2]
+                    }
+                }
+            ],
+            "result": {
+                "name": "string",
+                "schema": { "type": "string" }
+            }
+        }
+    ]
+}

@@ -2,12 +2,25 @@
 
 namespace Ufo\RpcSdk\Procedures\ResponseTransformer\Interfaces;
 
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+use Ufo\RpcSdk\Procedures\ResponseTransformer\Exceptions\SdkResponseHandlerException;
 use Ufo\RpcSdk\Procedures\ResponseTransformer\SdkResponseCreator;
 
+#[AutoconfigureTag(IResponseHandler::TAG)]
 interface IResponseHandler
 {
-    public function handle(array $schema, array $parent, mixed $result, SdkResponseCreator $creator): mixed;
+    const string TAG = 'ufo.sdk_response_handler';
 
-    public function canHandle(array $schema, array $parent): bool;
+    /**
+     * @param array $schema
+     * @param mixed $result
+     * @param callable $transform
+     * @param SdkResponseCreator $creator
+     * @throws SdkResponseHandlerException
+     * @return mixed
+     */
+    public function handle(array $schema, mixed $result, callable $transform, SdkResponseCreator $creator): mixed;
+
+    public function canHandle(array $schema): bool;
 
 }

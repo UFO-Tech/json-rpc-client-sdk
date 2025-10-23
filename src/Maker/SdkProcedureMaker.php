@@ -4,7 +4,6 @@ namespace Ufo\RpcSdk\Maker;
 
 use Symfony\Bundle\MakerBundle\Generator;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
-use Ufo\DTO\DTOTransformer;
 use Ufo\RpcError\RpcDataNotFoundException;
 use Ufo\RpcError\WrongWayException;
 use Ufo\RpcSdk\Exceptions\SdkBuilderException;
@@ -143,10 +142,11 @@ class SdkProcedureMaker implements IMaker, IClassLikeStackHolder
 
         foreach ($procedureData->params as $paramConfig) {
             $argument = new ArgumentDefinition(
-                $paramConfig->name,
-                $paramConfig->typeConfig,
-                !$paramConfig->required,
-                $paramConfig->assertions ?? null
+                name: $paramConfig->name,
+                typeConfig: $paramConfig->typeConfig,
+                optional: !$paramConfig->required,
+                assertions: $paramConfig->assertions ?? null,
+                defaultValue: $this->configsHolder->getDefaultValueForParam($paramConfig->parentConfig->name, $paramConfig->name)
             );
             $method->addArgument($argument);
         }

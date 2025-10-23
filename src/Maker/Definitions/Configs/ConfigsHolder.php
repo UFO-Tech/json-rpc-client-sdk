@@ -42,6 +42,11 @@ class ConfigsHolder
      */
     protected array $dtos = [];
 
+    /**
+     * @var array <string,string>
+     */
+    protected array $defaultValues = [];
+
     readonly public string $apiUrl;
 
     readonly public string $apiVendorAlias;
@@ -169,5 +174,15 @@ class ConfigsHolder
         } catch (\Throwable) {
             return '';
         }
+    }
+
+    public function addDefaultValueForParam(ParamConfig $paramConfig, mixed $defaultValue): void
+    {
+        $this->defaultValues[$paramConfig->parentConfig->name][$paramConfig->name] = $defaultValue;
+    }
+
+    public function getDefaultValueForParam(string $className, string $paramName): mixed
+    {
+        return $this->defaultValues[$className][$paramName] ?? null;
     }
 }

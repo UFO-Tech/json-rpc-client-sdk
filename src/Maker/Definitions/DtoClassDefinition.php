@@ -4,6 +4,7 @@ namespace Ufo\RpcSdk\Maker\Definitions;
 
 use Ufo\DTO\Helpers\EnumResolver;
 use Ufo\DTO\Helpers\TypeHintResolver;
+use Ufo\RpcSdk\Maker\Definitions\Configs\ConfigsHolder;
 use Ufo\RpcSdk\Maker\Definitions\Configs\ParamConfig;
 use Ufo\RpcSdk\Maker\Interfaces\IClassLikeDefinition;
 use Ufo\RpcSdk\Maker\Traits\ClassDefinitionsMethodsHolderTrait;
@@ -27,7 +28,8 @@ class DtoClassDefinition implements IClassLikeDefinition
      */
     public function __construct(
         string $namespace,
-        string $className
+        string $className,
+        protected ConfigsHolder $configsHolder
     )
     {
         $this->className = $className;
@@ -50,6 +52,13 @@ class DtoClassDefinition implements IClassLikeDefinition
                 $this->docs[$name] = $paramConfig->typeConfig->typeDoc;
             }
             $this->properties[$name] = $paramConfig->typeConfig->type;
+
+            if (!$paramConfig->required) {
+                $this->addDefaultValue(
+                    $name,
+                    $this->configsHolder->getDefaultValueForParam($this->className, $name) ?? $paramConfig->defaultValue
+                );
+            }
         }
 
     }

@@ -78,7 +78,7 @@ class MethodDefinition
         }
         $br = $withAttr ? PHP_EOL : '';
 
-        return implode(', '.$br.str_pad('', 8) , $args)
+        return implode(($withAttr ? ', ' : '|').$br.str_pad('', 8) , $args)
                .$br
                .($withAttr ? str_pad('', 4) : '');
     }

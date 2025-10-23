@@ -2,10 +2,13 @@
 
 namespace Ufo\RpcSdk\Maker\Helpers;
 
+use Ufo\RpcSdk\Maker\Definitions\EnumDefinition;
+
 use function is_array;
 use function is_bool;
 use function is_null;
 use function is_string;
+use function str_starts_with;
 
 class ParamToStringConverter
 {
@@ -24,6 +27,7 @@ class ParamToStringConverter
     public static function convert(mixed $data): string
     {
         return match (true) {
+            is_string($data) && str_starts_with($data, EnumDefinition::FOLDER) => $data,
             is_string($data) => "'$data'",
             is_array($data) => self::convertArray($data),
             is_bool($data) => $data ? 'true' : 'false',

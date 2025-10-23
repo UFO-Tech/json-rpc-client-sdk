@@ -12,17 +12,24 @@ use function strtolower;
 readonly class ProcedureConfig
 {
     /**
+     * @var ParamConfig[]
+     */
+    public array $params;
+
+    /**
      * @param array<string, string> $tags
-     * @param ParamConfig[] $params
      */
     public function __construct(
         public string $name,
         public array $tags,
         public string $summary,
-        public array $params,
+        array $params,
         public ResultConfig $result,
         public array $context = []
-    ) {}
+    )
+    {
+        $this->params = array_map(fn(array $param) => ParamConfig::fromArray($this, $param), $params);
+    }
 
     public static function fromArray(array $procedure) :static
     {
@@ -34,7 +41,7 @@ readonly class ProcedureConfig
             $procedure['name'],
             $procedure['tags'] ?? [],
             $procedure['summary'] ?? '',
-            array_map(fn(array $param) => ParamConfig::fromArray($param), $procedure['params'] ?? []),
+            $procedure['params'] ?? [],
             ResultConfig::fromArray($procedure['result'] ?? [], $namespaces),
         );
     }

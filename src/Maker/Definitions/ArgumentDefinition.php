@@ -20,10 +20,11 @@ class ArgumentDefinition
         protected string $name,
         protected TypeConfig $typeConfig,
         protected bool $optional,
-        ?string $assertions = null
+        ?string $assertions = null,
+        mixed $defaultValue = null,
     )
     {
-        $this->defaultValue = DocHelper::getPath($typeConfig->schema, 'default', strict: false);
+        $this->defaultValue = $defaultValue ?? DocHelper::getPath($typeConfig->schema, 'default', strict: false);
         $this->assertions = new AssertionsDefinition($assertions ?? '');
     }
 
