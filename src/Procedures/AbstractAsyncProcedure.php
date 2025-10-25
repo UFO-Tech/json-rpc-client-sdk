@@ -12,6 +12,7 @@ use Throwable;
 use Ufo\RpcError\AbstractRpcErrorException;
 use Ufo\RpcObject\RpcAsyncRequest;
 use Ufo\RpcObject\RpcRequest;
+use Ufo\RpcObject\Transformer\Transformer;
 use Ufo\RpcSdk\Exceptions\ConfigNotFoundException;
 use Ufo\RpcSdk\Exceptions\SdkException;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
@@ -61,6 +62,13 @@ abstract class AbstractAsyncProcedure extends AbstractBaseProcedure implements I
 
         $transport = $this->transportFactory->createTransport($asyncDSN, $this->asyncOptions($asyncDSN), new PhpSerializer());
         $request = RpcRequest::fromArray($apiMethodDef->body);
+
+        $request = new RpcRequest(
+            $request->getId(),
+            $request->getMethod(),
+            params: json_decode(Transformer::getDefault()->serialize($request->getParams(), 'json'), true),
+            version: $request->getVersion(),
+        );
 
         $env = new Envelope(
             new RpcAsyncRequest($request, $this->token),

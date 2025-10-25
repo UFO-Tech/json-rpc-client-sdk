@@ -2,9 +2,6 @@
 
 namespace Ufo\RpcSdk\Tests\Fixtures\DTO;
 
-class TestSmartUserDTO
+class TestSmartUserDTO extends TestUserDTO
 {
-    public string $name;
-    public int $status = -1;
-    public string $email;
 }

@@ -1,7 +1,7 @@
 {
     "name": "ufo-tech/json-rpc-client-sdk",
     "description": "Simple clientSDK builder for any json-RPC servers",
-    "version": "4.0.1",
+    "version": "4.0.2",
     "license": "MIT",
     "authors": [
         {
@@ -42,7 +42,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Ufo\\RpcSdk\\Tests\\": "tests/"
+            "Ufo\\RpcSdk\\Tests\\": "tests/",
+            "FunctionalTest\\SDK\\": "var/sdk/"
         }
     },
     "extra" : {

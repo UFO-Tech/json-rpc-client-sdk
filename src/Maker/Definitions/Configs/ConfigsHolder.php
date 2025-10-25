@@ -97,7 +97,7 @@ class ConfigsHolder
                 fn(string $name, array $schema) => [
                     'name' => $name,
                     'schema' => $schema,
-                    'required' => in_array($name, $dto['required']),
+                    'required' => in_array($name, $dto['required'] ?? []),
                 ],
                 array_keys($dto['properties'] ?? []),
                 $dto['properties'] ?? []

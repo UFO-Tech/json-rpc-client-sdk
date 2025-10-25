@@ -78,7 +78,7 @@ class SdkResponseCreatorTest extends TestCase
     }
 
 
-    public function testFromCollectionDTOApiResponseReturnsRpcResponseObject(): void
+    public function testFromCollectionDTOApiResponseReturnsRpcResponseObjectWithSmartObject(): void
     {
         $json = $this->createResponseJson([
             [
@@ -90,6 +90,7 @@ class SdkResponseCreatorTest extends TestCase
                 "name" => "Peter",
                 "status" => 10,
                 "email" => "test2@test",
+                DTOTransformer::DTO_CLASSNAME => 'TestSmartUserDTO'
             ],
         ]);
         $apiDefinition = $this->createApiDefinition('testCollectionDTO', TestUserDTO::class . '[]');
@@ -103,7 +104,7 @@ class SdkResponseCreatorTest extends TestCase
 
         $this->assertIsArray($result);
         $this->assertInstanceOf(TestUserDTO::class, $result[0]);
-        $this->assertInstanceOf(TestUserDTO::class, $result[1]);
+        $this->assertInstanceOf(TestSmartUserDTO::class, $result[1]);
 
         $this->assertSame(1, $result[0]->status);
         $this->assertSame('Ivan', $result[0]->name);
@@ -176,6 +177,33 @@ class SdkResponseCreatorTest extends TestCase
         $data = $response->getResult(true);
         $this->assertInstanceOf(TestUserDTO::class, $data[0]);
         $this->assertInstanceOf(DummyDTO::class, $data[1]);
+    }
+
+    public function testArrayOfUnionUserOrSmartUserDTO(): void
+    {
+        $json = $this->createResponseJson([
+            [
+                "name" => "Ivan",
+                "status" => 1,
+                "email" => "test@test",
+            ],
+            [
+                "name" => "Peter",
+                "status" => 10,
+                "email" => "test2@test",
+                DTOTransformer::DTO_CLASSNAME => 'TestSmartUserDTO'
+            ],
+        ]);
+        $apiDefinition = $this->createApiDefinition(
+            'testUnionArray', 'array<' . TestUserDTO::class . '|' . TestSmartUserDTO::class . '>'
+        );
+
+        $response = SdkResponseCreator::fromApiResponse($json, $apiDefinition, $this->getHandlers());
+        $this->assertRpcResponse($response);
+
+        $data = $response->getResult(true);
+        $this->assertInstanceOf(TestUserDTO::class, $data[0]);
+        $this->assertInstanceOf(TestSmartUserDTO::class, $data[1]);
     }
     public function testUnionOfArrayUserOrDummyPositive(): void
     {

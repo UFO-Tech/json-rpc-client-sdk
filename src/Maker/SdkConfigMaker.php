@@ -32,13 +32,16 @@ class SdkConfigMaker implements IMaker
 
     protected function fillConfigPath(): string
     {
-        $psr4 = require($this->configsHolder->projectRootDir . self::AUTOLOAD_PSR4);
+        $psr4 = [];
+        if (file_exists($this->configsHolder->projectRootDir . self::AUTOLOAD_PSR4)) {
+            $psr4 = include $this->configsHolder->projectRootDir . self::AUTOLOAD_PSR4;
+        }
         return ($psr4[$this->configsHolder->namespace . '\\'] ?? [])[0] ?? $this->configsHolder->projectRootDir;
     }
 
     protected function getRpcTransport(bool $async = false): string
     {
-        $type = $async ? 'async' : 'sync';
+        $type = $async ? SdkConfigs::ASYNC : SdkConfigs::SYNC;
         try {
             return str_replace(
                 '{user}:{pass}',
