@@ -53,9 +53,10 @@ trait ClassDefinitionsMethodsHolderTrait
         return $this->defaultValues;
     }
 
-    public function addDefaultValue(string $name, mixed $defaultValue): static
+    public function addDefaultValue(string $name, mixed $defaultValue, ?string $type = null): static
     {
-        $this->defaultValues[$name] = ' = ' . ParamToStringConverter::defaultValue($defaultValue);;
+        $this->defaultValues[$name] = ' = ' . ParamToStringConverter::defaultValue($defaultValue, $type);
+
         return $this;
     }
 }

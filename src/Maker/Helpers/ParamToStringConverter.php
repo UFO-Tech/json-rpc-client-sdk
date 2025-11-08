@@ -2,6 +2,7 @@
 
 namespace Ufo\RpcSdk\Maker\Helpers;
 
+use Ufo\DTO\Helpers\TypeHintResolver;
 use Ufo\RpcSdk\Maker\Definitions\EnumDefinition;
 
 use function is_array;
@@ -12,8 +13,11 @@ use function str_starts_with;
 
 class ParamToStringConverter
 {
-    public static function defaultValue(mixed $defaultValue): string
+    public static function defaultValue(mixed $defaultValue, ?string $type = null): string
     {
+        if ($type && is_null($defaultValue)) {
+            $defaultValue = static::normalizeEmpty($type);
+        }
         return match ($defaultValue) {
             null => 'null',
             '' => '""',
@@ -41,5 +45,16 @@ class ParamToStringConverter
     {
         $result = array_map(fn($item) => self::convert($item), $data);
         return '[' . implode(', ', $result) . ']';
+    }
+
+    protected static function normalizeEmpty(string $type): mixed
+    {
+        return match ($type) {
+            TypeHintResolver::STRING->value => '',
+            TypeHintResolver::ARRAY->value => [],
+            TypeHintResolver::BOOL->value => false,
+            TypeHintResolver::INT->value => 0,
+            default => null,
+        };
     }
 }

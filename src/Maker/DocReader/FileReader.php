@@ -2,6 +2,8 @@
 
 namespace Ufo\RpcSdk\Maker\DocReader;
 
+use RuntimeException;
+use Throwable;
 use Ufo\RpcSdk\Exceptions\ApiDocReadErrorException;
 use Ufo\RpcSdk\Maker\DocReader\Interfaces\IDocReader;
 
@@ -19,10 +21,10 @@ readonly class FileReader implements IDocReader
     {
         try {
             if (!file_exists($this->docFilePath)) {
-                throw new \RuntimeException('Doc file is not found');
+                throw new RuntimeException('Doc file is not found');
             }
             return json_decode(file_get_contents($this->docFilePath), true);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new ApiDocReadErrorException($e->getMessage(), $e->getCode(), $e);
         }
     }

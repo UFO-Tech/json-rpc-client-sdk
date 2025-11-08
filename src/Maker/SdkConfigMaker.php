@@ -5,6 +5,7 @@ namespace Ufo\RpcSdk\Maker;
 
 use Symfony\Bundle\MakerBundle\Generator;
 use Symfony\Component\Yaml\Yaml;
+use Throwable;
 use Ufo\DTO\Helpers\EnumResolver;
 use Ufo\RpcObject\RpcTransport;
 use Ufo\RpcSdk\Maker\Definitions\Configs\ConfigsHolder;
@@ -50,7 +51,7 @@ class SdkConfigMaker implements IMaker
                     current($this->configsHolder->rpcResponse['servers'])[EnumResolver::CORE]['transport'][$type] ?? []
                 )
             );
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return '';
         }
     }

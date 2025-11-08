@@ -2,7 +2,9 @@
 
 namespace Ufo\RpcSdk\Exceptions;
 
-class ApiDocReadErrorException extends \RuntimeException
+use RuntimeException;
+
+class ApiDocReadErrorException extends RuntimeException
 {
 
 }

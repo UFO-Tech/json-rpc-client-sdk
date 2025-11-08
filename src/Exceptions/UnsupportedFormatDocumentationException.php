@@ -2,12 +2,13 @@
 
 namespace Ufo\RpcSdk\Exceptions;
 
+use Exception;
 use JetBrains\PhpStorm\Pure;
 use Throwable;
 
 use function implode;
 
-class UnsupportedFormatDocumentationException extends \Exception
+class UnsupportedFormatDocumentationException extends Exception
 {
     const array SUPPORTED = [
         "1.3.2",

@@ -8,13 +8,18 @@ use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Cache\Exception\CacheException;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
+use Throwable;
 use Ufo\DTO\Helpers\EnumResolver;
+use Ufo\DTO\Helpers\TypeHintResolver;
 use Ufo\RpcObject\RpcTransport;
 use Ufo\RpcSdk\Exceptions\UnsupportedFormatDocumentationException;
 use Ufo\RpcSdk\Maker\Definitions\UfoEnvelope;
 use Ufo\RpcSdk\Maker\DocReader\Interfaces\IDocReader;
+use Ufo\RpcSdk\Maker\Helpers\DocHelper;
 use Ufo\RpcSdk\Procedures\AsyncTransport;
 
+use function array_filter;
+use function array_key_exists;
 use function array_keys;
 use function array_map;
 use function current;
@@ -31,6 +36,7 @@ class ConfigsHolder
     readonly protected ?UfoEnvelope $envelope;
 
     readonly public array $rpcResponse;
+    readonly public array $rpcSchema;
 
     /**
      * @var array<string,ProcedureConfig>
@@ -85,25 +91,48 @@ class ConfigsHolder
                 $this->projectRootDir . '/var/cache/maker/'
             );
         }
-        $this->getApiRpcDoc();
+        $allSchema = $this->getApiRpcDoc();
 
-        $procedures = $this->rpcResponse['methods'] ?? $this->rpcResponse['services'] ?? $this->rpcResponse['procedures'];
-        foreach ($procedures as $procedure) {
-            if ($procedure['name'] === 'ping') continue;
-            $this->rpcProcedures[$procedure['name']] = ProcedureConfig::fromArray($procedure);
-        }
-        foreach ($this->rpcResponse['components']['schemas'] ?? [] as $dtoName => $dto) {
+        $components = $allSchema['components'] ?? [];
+        $allSchema['components'] = [];
+        $dtoSchemas = array_filter(
+            $components['schemas'] ?? [],
+            fn($schema) => $schema[TypeHintResolver::TYPE] === TypeHintResolver::OBJECT->value
+        );
+        foreach ($dtoSchemas as $dtoName => $dto) {
+            $dtoName = Str::asClassName($dtoName);
+            $dto['properties'] = array_combine(
+                array_keys($dto['properties'] ?? []),
+                array_map(
+                    fn(array $schema) => DocHelper::getComponentData($schema, $components),
+                    $dto['properties'] ?? []
+                )
+            );
+            $allSchema['components']['schemas'][$dtoName] = $dto;
             $properties = array_map(
                 fn(string $name, array $schema) => [
                     'name' => $name,
                     'schema' => $schema,
-                    'required' => in_array($name, $dto['required'] ?? []),
+                    'required' => in_array($name, $dto['required'] ?? []) || !array_key_exists('default', $schema),
                 ],
                 array_keys($dto['properties'] ?? []),
                 $dto['properties'] ?? []
             );
             $this->dtos[$dtoName] = DtoConfig::fromArray($dtoName, $properties);
         }
+
+        $procedures = $allSchema['methods'] ?? $allSchema['services'] ?? $allSchema['procedures'];
+        foreach ($procedures as $procedure) {
+            if ($procedure['name'] === 'ping') continue;
+            foreach ($procedure['params'] ?? [] as $i => $param) {
+                $procedure['params'][$i] = DocHelper::getComponentData($param, $components);
+            }
+            $procedure['result'] = DocHelper::getComponentData($procedure['result'] ?? [], $components);
+
+            $this->rpcProcedures[$procedure['name']] = ProcedureConfig::fromArray($procedure);
+        }
+
+        $this->rpcSchema = $allSchema;
     }
 
     /**
@@ -111,7 +140,7 @@ class ConfigsHolder
      * @throws InvalidArgumentException
      * @throws CacheException|UnsupportedFormatDocumentationException
      */
-    protected function getApiRpcDoc(): void
+    protected function getApiRpcDoc(): array
     {
 
         $cacheLifetime = $this->cacheLifeTimeSecond;
@@ -123,6 +152,7 @@ class ConfigsHolder
             }
         );
         $this->supportVersions();
+        return $this->rpcResponse;
     }
 
     protected function supportVersions(): void
@@ -139,9 +169,8 @@ class ConfigsHolder
             if (preg_match('/UFO-RPC-(\d)/', $env, $matches)) {
                 $this->envelope = new UfoEnvelope((int)$matches[1]);
             }
-        } catch (\Throwable) {}
-        $this->apiUrl = $server['url'] ?? throw new UnsupportedFormatDocumentationException('No url config in server block');;
-
+        } catch (Throwable) {}
+        $this->apiUrl = $server['url'] ?? throw new UnsupportedFormatDocumentationException('No url config in server block');
     }
 
     /**
@@ -171,7 +200,7 @@ class ConfigsHolder
                     current($this->rpcResponse['servers'])[EnumResolver::CORE]['transport'][$type] ?? []
                 )
             );
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return '';
         }
     }

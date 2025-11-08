@@ -4,6 +4,7 @@ namespace Ufo\RpcSdk\Maker;
 
 use Exception;
 use Symfony\Bundle\MakerBundle\Generator;
+use Throwable;
 use Ufo\DTO\ArrayConstructibleTrait;
 use Ufo\DTO\ArrayConvertibleTrait;
 use Ufo\DTO\Interfaces\IArrayConstructible;
@@ -63,7 +64,7 @@ class SdkDtoMaker implements IMaker, IClassLikeStackHolder
 
                 try {
                     ClassHelper::removePreviousClass($classDefinition->getFQCN());
-                } catch (\Throwable $e) {}
+                } catch (Throwable $e) {}
 
                 $classDefinition->setProperties($dtoConfig->params);
 

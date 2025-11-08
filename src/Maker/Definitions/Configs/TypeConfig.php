@@ -2,9 +2,13 @@
 
 namespace Ufo\RpcSdk\Maker\Definitions\Configs;
 
+use Symfony\Bundle\MakerBundle\Str;
 use Ufo\DTO\Helpers\EnumResolver;
 use Ufo\DTO\Helpers\TypeHintResolver;
+use Ufo\RpcSdk\Maker\Helpers\ClassHelper;
 
+use function count;
+use function end;
 use function str_contains;
 
 readonly class TypeConfig
@@ -18,7 +22,7 @@ readonly class TypeConfig
 
     public static function fromArray(array $result, array $namespaces = []) :static
     {
-        $schema = $result['schema'] ?? [];
+        $schema = ClassHelper::classNameNormalizer($result['schema'] ?? []);
         return new static(
             $schema,
             $schema ? TypeHintResolver::jsonSchemaToPhp($schema, $namespaces) : TypeHintResolver::MIXED->value,

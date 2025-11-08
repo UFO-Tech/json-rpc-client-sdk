@@ -5,11 +5,13 @@ namespace Ufo\RpcSdk\Maker\Helpers;
 use ReflectionClass;
 use Symfony\Bundle\MakerBundle\Str;
 use Throwable;
+use Ufo\DTO\Helpers\TypeHintResolver;
 use Ufo\RpcSdk\Exceptions\SdkBuilderException;
 
 use function array_map;
 use function class_exists;
 use function count;
+use function explode;
 use function file_exists;
 use function implode;
 use function preg_match;
@@ -41,6 +43,7 @@ final readonly class ClassHelper
             $apiMethod = $pMatch[3];
             $separator = $pMatch[2];
         }
+        $apiMethod = Str::asLowerCamelCase($apiMethod);
         return new self($className . 'SDK' , $apiMethod, $separator, $className);
     }
 
@@ -72,5 +75,17 @@ final readonly class ClassHelper
                 );
             }
         }
+    }
+
+    public static function classNameNormalizer(array $schema): array
+    {
+        return TypeHintResolver::applyToSchema($schema, function ($schema) {
+            if ($schema[TypeHintResolver::REF] ?? false) {
+                $ref = explode('/', $schema[TypeHintResolver::REF]);
+                $ref[count($ref)-1] = Str::asClassName($ref[count($ref)-1]);
+                $schema[TypeHintResolver::REF] = implode('/', $ref);
+            }
+            return $schema;
+        });
     }
 }

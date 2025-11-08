@@ -3,6 +3,7 @@
 namespace Ufo\RpcSdk\Maker\DocReader;
 
 use Symfony\Component\HttpClient\HttpClient;
+use Throwable;
 use Ufo\RpcSdk\Exceptions\ApiDocReadErrorException;
 use Ufo\RpcSdk\Maker\DocReader\Interfaces\IDocReader;
 
@@ -28,7 +29,7 @@ readonly class HttpReader implements IDocReader
             );
 
             return json_decode($request->getContent(), true);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new ApiDocReadErrorException($e->getMessage(), $e->getCode(), $e);
         }
     }

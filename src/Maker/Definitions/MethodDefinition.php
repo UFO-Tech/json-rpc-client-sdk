@@ -72,7 +72,7 @@ class MethodDefinition
             $type = $withAttr ? $argument->getType() : $argument->getTypeDescription();
             $args[$name] .= $type . ' $' . $name;
             if ($argument->isOptional()) {
-                $value = ParamToStringConverter::defaultValue($argument->getDefaultValue());
+                $value = ParamToStringConverter::defaultValue($argument->getDefaultValue(), $argument->getType());
                 $args[$name] .= ' = ' . $value;
             }
         }

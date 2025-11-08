@@ -2,7 +2,9 @@
 
 namespace Ufo\RpcSdk\Exceptions;
 
-class ConfigNotFoundException extends \InvalidArgumentException
+use InvalidArgumentException;
+
+class ConfigNotFoundException extends InvalidArgumentException
 {
 
 }

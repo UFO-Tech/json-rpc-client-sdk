@@ -28,22 +28,35 @@
                 "type": "object",
                 "properties": {
                     "user": { "$ref": "#/components/schemas/UserDTO" },
-                    "address": { "$ref": "#/components/schemas/AddressDTO" }
-                }
+                    "addresses": {
+                        "type": "array",
+                        "items": { "$ref": "#/components/schemas/AddressDTO" }
+                    }
+                },
+                "required": ["user", "addresses"]
             },
             "UserDTO": {
                 "type": "object",
                 "properties": {
                     "id": { "type": "integer" },
                     "name": { "type": "string" }
-                }
+                },
+                "required": ["id", "name"]
             },
             "AddressDTO": {
                 "type": "object",
                 "properties": {
-                    "city": { "type": "string" },
-                    "street": { "type": "string" }
+                    "city": {
+                        "default": "London",
+                        "type": "string"
+                    },
+                    "street": {
+                        "type": "string"
+                    }
                 }
+            },
+            "NotDto": {
+                "type": "string"
             }
         }
     }

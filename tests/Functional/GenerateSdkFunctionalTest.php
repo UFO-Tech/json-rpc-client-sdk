@@ -2,19 +2,27 @@
 
 namespace Ufo\RpcSdk\Tests\Functional;
 
+use Exception;
 use Generator;
+use phpDocumentor\Reflection\DocBlockFactory;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use Symfony\Bundle\MakerBundle\FileManager;
 use Symfony\Bundle\MakerBundle\Generator as SymfonyGenerator;
 use Symfony\Bundle\MakerBundle\Util\AutoloaderUtil;
 use Symfony\Bundle\MakerBundle\Util\ComposerAutoloaderFinder;
 use Symfony\Bundle\MakerBundle\Util\MakerFileLinkFormatter;
 use Symfony\Component\Filesystem\Filesystem;
+use Ufo\DTO\DTOTransformer;
 use Ufo\DTO\Helpers\EnumResolver;
+use Ufo\DTO\Helpers\TypeHintResolver;
+use Ufo\DTO\Interfaces\IArrayConstructible;
+use Ufo\DTO\Interfaces\IArrayConvertible;
 use Ufo\RpcSdk\Maker\Definitions\Configs\ConfigsHolder;
 use Ufo\RpcSdk\Maker\Definitions\Configs\ProcedureConfig;
 use Ufo\RpcSdk\Maker\Definitions\DtoClassDefinition;
 use Ufo\RpcSdk\Maker\DocReader\FileReader;
+use Ufo\RpcSdk\Maker\Helpers\ClassHelper;
 use Ufo\RpcSdk\Maker\Interfaces\IClassLikeDefinition;
 use Ufo\RpcSdk\Maker\Interfaces\IHaveMethodsDefinitions;
 use Ufo\RpcSdk\Maker\Maker;
@@ -26,17 +34,21 @@ use Symfony\Component\Yaml\Yaml;
 use Ufo\RpcSdk\Procedures\SdkConfigs;
 
 use function array_filter;
+use function class_exists;
 use function count;
+use function current;
+use function file_exists;
 use function glob;
+use function in_array;
 use function is_dir;
+use function is_subclass_of;
+use function method_exists;
 use function pathinfo;
 use function scandir;
+use function time;
 use function uniqid;
-use function var_export;
 
-use const PATHINFO_BASENAME;
-use const PATHINFO_DIRNAME;
-use const PATHINFO_FILENAME;
+use const DIRECTORY_SEPARATOR;
 
 class GenerateSdkFunctionalTest extends TestCase
 {
@@ -46,16 +58,25 @@ class GenerateSdkFunctionalTest extends TestCase
     private string $testDir;
     private string $clientDir;
     private string $dtoDir;
+    private string $dtoNS;
     private string $namespace;
+
+    private const array EXCLUDE_SCHEMA = [
+        'notUfo1',
+        'notUfo2',
+        'notUfo3',
+        'withAllKeys',
+    ];
 
     protected function setUp(): void
     {
-        $testDir = 'Test_' . uniqid();
+        $testDir = 'Test_' . time();// . uniqid();
         $this->testDir = __DIR__ . '/../../var/sdk/' . $testDir;
         mkdir($this->testDir, 0777, true);
         $this->clientDir = $this->testDir . '/' . static::DEMO_VENDOR_NS . '/' ;
         $this->dtoDir = $this->clientDir . DtoClassDefinition::FOLDER;
         $this->namespace = 'FunctionalTest\SDK\\' . $testDir;
+        $this->dtoNS = $this->namespace . '\\' . static::DEMO_VENDOR_NS . '\\' .DtoClassDefinition::FOLDER;
 
     }
 
@@ -74,11 +95,27 @@ class GenerateSdkFunctionalTest extends TestCase
         $path = $path ?? static::SCHEMA_DIR;
         foreach (scandir($path) as $file) {
             if ($file === '.' || $file === '..') continue;
-            $full = "$path/$file";
+            $full = $path . DIRECTORY_SEPARATOR . $file;
             if (is_dir($full)) {
                 yield from static::getSchemaFile($full);
             } else {
                 yield [pathinfo($full)];
+            }
+        }
+    }
+
+    private function requireAllPhpFiles(?string $dir = null): void
+    {
+        $dir ??= $this->clientDir;
+        if (file_exists($dir)) {
+            foreach (scandir($dir) as $item) {
+                if ($item === '.' || $item === '..') continue;
+                $path = $dir . DIRECTORY_SEPARATOR . $item;
+                if (is_dir($path)) {
+                    $this->requireAllPhpFiles($path);
+                } elseif (str_ends_with($path, '.php')) {
+                    require_once $path;
+                }
             }
         }
     }
@@ -88,7 +125,7 @@ class GenerateSdkFunctionalTest extends TestCase
      */
     public function testFullSdkGenerationFromLocalSchema(array $fileInfo): void
     {
-        $schemaName = $fileInfo['filename'];;
+        $schemaName = $fileInfo['filename'];
         $schemaFile =  $fileInfo['dirname'] . '/' . $fileInfo['basename'];
         $docReader = new FileReader($schemaFile);
 
@@ -132,46 +169,117 @@ class GenerateSdkFunctionalTest extends TestCase
         });
         unset($maker);
 
-        $testMethodName = $schemaName . 'Test';
-        if (!method_exists($this, $testMethodName)) throw new \Exception("Test for schema '$schemaName.json' not found");
+        $this->requireAllPhpFiles();
 
-        $this->{$testMethodName}(
-            holder: $holder,
-            configMaker: $configMaker
-        );
+        $testMethodName = $schemaName . 'Test';
+
+        $this->baseDtoTest($configMaker);
+
+        if (!in_array($schemaName,static::EXCLUDE_SCHEMA)) {
+            if (!method_exists($this, $testMethodName))
+                throw new Exception("Test for schema '$schemaName.json' not found. Write test method: $testMethodName, or exclude this schema from test");
+
+            $this->{$testMethodName}(
+                configMaker: $configMaker
+            );
+        }
+
     }
 
-    protected function dtoTest(ConfigsHolder $holder, SdkConfigMaker $configMaker): void
+    protected function baseDtoTest(SdkConfigMaker $configMaker): void
     {
         $files = glob($this->dtoDir . '/*.php');
-        $this->assertNotEmpty($files, 'DTO classes should be generated');
+        $dtoSchema = $configMaker->configsHolder->rpcSchema["components"]["schemas"] ?? [];
+        $dtoSchema = array_filter($dtoSchema, fn($schema) => $schema['type'] === TypeHintResolver::OBJECT->value);
+
+        $this->assertCount(
+            count($dtoSchema),
+            $files,
+            'DTO classes should be generated'
+        );
+
+        foreach ($configMaker->configsHolder->getDtos() as $dtoName => $dtoConfig) {
+            $dto = $this->dtoNS . '\\' . $dtoName;
+            $this->assertTrue(class_exists($dto), 'DTO class should be generated');
+            $this->assertTrue(is_subclass_of($dto, IArrayConvertible::class), 'DTO class should implement IArrayConvertible');
+            $this->assertTrue(is_subclass_of($dto, IArrayConstructible::class), 'DTO class should implement IArrayConstructible');
+
+            $dtoRef = new ReflectionClass($dto);
+            foreach ($dtoSchema[$dtoName]['properties'] as $propertyName => $propertySchema) {
+                $propertySchema = ClassHelper::classNameNormalizer($propertySchema);
+                $this->assertTrue(
+                    $dtoRef->hasProperty($propertyName),
+                    $dtoName . ' class should have property "' . $propertyName . '"'
+                );
+                $this->assertEquals(
+                    TypeHintResolver::jsonSchemaToPhp(
+                        $propertySchema, ['dto' => $this->dtoNS]
+                    ),
+                    $dtoRef->getProperty($propertyName)->getType()->getName(),
+                    'Property "' . $propertyName . '" should have type ' . $dtoRef->getProperty($propertyName)->getType()->getName()
+                );
+                $this->assertTrue(
+                    $dtoRef->getProperty($propertyName)->isPublic(),
+                    'Property "' . $propertyName . '" should be public'
+                );
+
+                if (!in_array($propertyName, $dtoSchema[$dtoName]['required'] ?? [], true)
+                    && array_key_exists('default', $propertySchema)
+                ) {
+
+                    $this->assertTrue(
+                        $dtoRef->getProperty($propertyName)->hasDefaultValue(),
+                        "$dtoName::$propertyName should have default value"
+                    );
+
+                    $this->assertEquals(
+                        $propertySchema['default'] ?? null,
+                        $dtoRef->getProperty($propertyName)->getDefaultValue(),
+                        "Default value for $dtoName::$propertyName should be equal to to schema default value"
+                    );
+                }
+
+                if ($doc = $dtoRef->getProperty($propertyName)->getDocComment()) {
+                    $docBlock = DocBlockFactory::createInstance()->create($doc);
+                    $dataFromSDK = TypeHintResolver::typeDescriptionToJsonSchema(
+                        (string)current($docBlock->getTagsByName('var'))->getType(),
+                        [
+                            DTOTransformer::DTO_NS_KEY => $this->dtoNS,
+                        ]
+                    );
+                    $dtoParamType = TypeHintResolver::jsonSchemaToTypeDescription(
+                        $dtoSchema[$dtoName]['properties'][$propertyName],
+                        ['dto' => $this->dtoNS]
+                    );
+                    $dataFromSchema = TypeHintResolver::typeDescriptionToJsonSchema($dtoParamType, [
+                        DTOTransformer::DTO_NS_KEY => $this->dtoNS,
+                    ]);
+                    $this->assertEquals($dataFromSDK, $dataFromSchema, 'SDK data should be equal to schema data for property ' . $dtoName . '::' . $propertyName);
+                }
+
+            }
+        }
     }
 
-    protected function nestedDtoTest(ConfigsHolder $holder, SdkConfigMaker $configMaker): void
+    protected function enumTest(SDKConfigMaker $configMaker): void
     {
-//        $files = glob($this->dtoDir . '/*.php');
-//        $this->assertNotEmpty($files, 'DTO classes should be generated');
+        $files = glob($this->clientDir . '/*.php');
+        $this->assertNotEmpty($files, 'Client classes should be generated');
     }
 
-    protected function enumTest(ConfigsHolder $holder, SdkConfigMaker $configMaker): void
-    {
-//        $files = glob($this->clientDir . '/*.php');
-//        $this->assertNotEmpty($files, 'Client classes should be generated');
-    }
-
-    protected function emptyMethodsTest(ConfigsHolder $holder, SdkConfigMaker $configMaker): void
+    protected function emptyMethodsTest(SdkConfigMaker $configMaker): void
     {
         $this->assertDirectoryDoesNotExist($this->clientDir);
     }
 
-    protected function fullTransportTest(ConfigsHolder $holder, SdkConfigMaker $configMaker): void
+    protected function fullTransportTest(SdkConfigMaker $configMaker): void
     {
         $configPath = $configMaker->sdkConfigs->getConfigDistPath();
         $data = Yaml::parseFile($configPath);
         $this->assertArrayHasKey(SdkConfigs::ASYNC, $data[static::DEMO_VENDOR_NS]);
     }
 
-    protected function simpleTest(ConfigsHolder $holder, SdkConfigMaker $configMaker): void
+    protected function simpleTest(SdkConfigMaker $configMaker): void
     {
         // Перевіряємо, що створився YAML-конфіг
         $configPath = $configMaker->sdkConfigs->getConfigDistPath();

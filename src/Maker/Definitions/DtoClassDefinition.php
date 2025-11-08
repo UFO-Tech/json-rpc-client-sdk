@@ -2,6 +2,7 @@
 
 namespace Ufo\RpcSdk\Maker\Definitions;
 
+use Symfony\Bundle\MakerBundle\Str;
 use Ufo\DTO\Helpers\EnumResolver;
 use Ufo\DTO\Helpers\TypeHintResolver;
 use Ufo\RpcSdk\Maker\Definitions\Configs\ConfigsHolder;
@@ -32,7 +33,7 @@ class DtoClassDefinition implements IClassLikeDefinition
         protected ConfigsHolder $configsHolder
     )
     {
-        $this->className = $className;
+        $this->className = Str::asClassName($className);
         $this->namespace = $namespace;
     }
 
@@ -56,7 +57,8 @@ class DtoClassDefinition implements IClassLikeDefinition
             if (!$paramConfig->required) {
                 $this->addDefaultValue(
                     $name,
-                    $this->configsHolder->getDefaultValueForParam($this->className, $name) ?? $paramConfig->defaultValue
+                    $this->configsHolder->getDefaultValueForParam($this->className, $name) ?? $paramConfig->defaultValue,
+                    $paramConfig->typeConfig->type
                 );
             }
         }
