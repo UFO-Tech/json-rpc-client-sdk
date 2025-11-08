@@ -8,6 +8,7 @@ use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\Transport\Serialization\PhpSerializer;
 use Symfony\Component\Messenger\Transport\TransportFactoryInterface;
+use Symfony\Component\Messenger\Transport\TransportInterface;
 use Throwable;
 use Ufo\RpcError\AbstractRpcErrorException;
 use Ufo\RpcObject\RpcAsyncRequest;
@@ -24,6 +25,8 @@ use function str_replace;
 
 abstract class AbstractAsyncProcedure extends AbstractBaseProcedure implements ISdkMethodClass
 {
+    protected TransportInterface $transport;
+
     /**
      * @param string $token
      * @param string $secretAsync format as {user:pass}
@@ -50,17 +53,12 @@ abstract class AbstractAsyncProcedure extends AbstractBaseProcedure implements I
     {
         $apiMethodDef = $this->callApiMethodDef();
 
-        try {
-            $attr = ($apiMethodDef->refClass->getAttributes(AsyncTransport::class) ?? [])[0] ?? null;
-            $asyncTransport = $attr?->newInstance() ?? throw new ConfigNotFoundException();
-        } catch (ConfigNotFoundException) {
-            $nsParts = explode('\\', $apiMethodDef->refClass->getNamespaceName());
-            $asyncTransport = new AsyncTransport($this->sdkConfigs->getApiEndpoint(end($nsParts), false));
-        }
+        $nsParts = explode('\\', $apiMethodDef->refClass->getNamespaceName());
+        $asyncDSN = $this->sdkConfigs->getApiEndpoint(end($nsParts), false);
+        $asyncDSN = str_replace(AsyncTransport::PLACEHOLDER, $this->secretAsync, $asyncDSN);
 
-        $asyncDSN = str_replace(AsyncTransport::PLACEHOLDER, $this->secretAsync, $asyncTransport->dsn);
-
-        $transport = $this->transportFactory->createTransport($asyncDSN, $this->asyncOptions($asyncDSN), new PhpSerializer());
+        $this->transport ??=
+            $this->transportFactory->createTransport($asyncDSN, $this->asyncOptions($asyncDSN), new PhpSerializer());
         $request = RpcRequest::fromArray($apiMethodDef->body);
 
         $request = new RpcRequest(
@@ -77,7 +75,7 @@ abstract class AbstractAsyncProcedure extends AbstractBaseProcedure implements I
             ]
         );
 
-        $transport->send($env);
+        $this->transport->send($env);
 
         try {
             RequestResponseStack::addRequest($request, ['async' => true]);
