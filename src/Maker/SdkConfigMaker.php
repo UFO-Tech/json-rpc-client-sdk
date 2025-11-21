@@ -40,16 +40,13 @@ class SdkConfigMaker implements IMaker
         return ($psr4[$this->configsHolder->namespace . '\\'] ?? [])[0] ?? $this->configsHolder->projectRootDir;
     }
 
-    protected function getRpcTransport(bool $async = false): string
+    protected function getRpcTransport(array $transportConfig): string
     {
-        $type = $async ? SdkConfigs::ASYNC : SdkConfigs::SYNC;
         try {
             return str_replace(
                 '{user}:{pass}',
                 AsyncTransport::PLACEHOLDER,
-                (string)RpcTransport::fromArray(
-                    current($this->configsHolder->rpcResponse['servers'])[EnumResolver::CORE]['transport'][$type] ?? []
-                )
+                (string)RpcTransport::fromArray($transportConfig)
             );
         } catch (Throwable) {
             return '';
@@ -60,12 +57,16 @@ class SdkConfigMaker implements IMaker
     {
         $configs = $this->sdkConfigs->getConfigs(true);
         $vendor = $this->configsHolder->apiVendorAlias;
-        $configs[$vendor] = [
-            SdkConfigs::SYNC => $this->configsHolder->apiUrl
-        ];
-        $async = $this->getRpcTransport(true);
-        if (!empty($async)) {
-            $configs[$vendor][SdkConfigs::ASYNC] = $async;
+
+        $server = current($this->configsHolder->rpcResponse['servers']);
+        foreach ($server[EnumResolver::CORE]['transport'] ?? [] as $transportName => $transportConfig) {
+            $configs[$vendor][$transportName] = $this->getRpcTransport($transportConfig);
+        }
+
+        if (empty($configs[$vendor])) {
+            $configs[$vendor] = [
+                SdkConfigs::SYNC => $this->configsHolder->apiUrl
+            ];
         }
 
         file_put_contents($this->sdkConfigs->getConfigDistPath(), Yaml::dump($configs));

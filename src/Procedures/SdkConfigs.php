@@ -15,7 +15,7 @@ class SdkConfigs
     const string DIST = '.dist';
 
     const string SYNC = 'sync';
-    const string ASYNC = 'async';
+    const string ASYNC = 'rpc_async';
 
     public function __construct(
         readonly public string $path,

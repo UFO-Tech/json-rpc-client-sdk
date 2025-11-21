@@ -22,8 +22,9 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 echo CliColor::YELLOW->value;
 
-$vendorName = readline('Enter API vendor name: ');
-$apiUrl = readline('Enter the API url: ');
+$vendorName = 'q';//readline('Enter API vendor name: ');
+//$vendorName = readline('Enter API vendor name: ');
+$apiUrl = '';//readline('Enter the API url: ');
 
 echo CliColor::RESET->value;
 

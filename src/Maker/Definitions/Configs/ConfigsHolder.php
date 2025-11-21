@@ -17,6 +17,7 @@ use Ufo\RpcSdk\Maker\Definitions\UfoEnvelope;
 use Ufo\RpcSdk\Maker\DocReader\Interfaces\IDocReader;
 use Ufo\RpcSdk\Maker\Helpers\DocHelper;
 use Ufo\RpcSdk\Procedures\AsyncTransport;
+use Ufo\RpcSdk\Procedures\SdkConfigs;
 
 use function array_filter;
 use function array_key_exists;
@@ -191,7 +192,7 @@ class ConfigsHolder
 
     public function getRpcTransport(bool $async = false): string
     {
-        $type = $async ? 'async' : 'sync';
+        $type = $async ? SdkConfigs::ASYNC : SdkConfigs::SYNC;
         try {
             return str_replace(
                 '{user}:{pass}',
