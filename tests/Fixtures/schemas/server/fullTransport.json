@@ -17,7 +17,7 @@
                         "path": "/api",
                         "method": "POST"
                     },
-                    "async": {
+                    "rpc_async": {
                         "scheme": "amqp",
                         "user": "{user}",
                         "pass": "{pass}",
