@@ -32,6 +32,7 @@ class MethodDefinition
     public function __construct(
         protected string $name,
         protected string $apiProcedure,
+        readonly public bool $deprecated = false
     ) {}
 
     public function addArgument(ArgumentDefinition $argument): void

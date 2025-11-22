@@ -9,13 +9,68 @@ Simple clientSDK builder for any json-RPC servers
 ![fork](https://img.shields.io/github/forks/ufo-tech/json-rpc-client-sdk?color=green&logo=github&style=flat)
 
 # See the [Documentations](https://docs.ufo-tech.space/bin/view/docs/JsonRpcClientSdk/?language=en)
-## Generate SDK 
-Run cli command ``` php bin/make.php ```
 
+# New in version 4.1
+### 🔍 Filtering methods during SDK generation
+
+The SDK supports skipping RPC methods during generation.  
+This is done using the `ignoredMethods` option, which accepts a list of masks.
+
+**📌 Mask Rules**
+- `*` — any sequence of characters
+- `!` at the beginning — **inversion (always generate)**
+- `&` at the beginning or after `!` — indicates a sync request
+- `~` at the beginning or after `!` — indicates an async request
+- Other characters are **literals**, meaning they represent themselves
+
+**✔️ Example masks**
+
+| Mask               | Description                                                                      |
+|--------------------|----------------------------------------------------------------------------------|
+| `AdminApi.*`       | ignores all methods of `AdminApi` class                                          |
+| `Command.run`      | ignores only `Command.run`                                                       |
+| `#Command.run`     | ignores only `Command.run` in sync API                                           |
+| `*.delete`         | ignores all `delete()` methods in any class                                      |
+| `!~Comment.delete` | **always generates `Comment.delete` for async API even if `*.delete` blocks it** |
+| `*.*Test`          | ignores all methods ending with `Test`                                           |
+
+**🚫 Prohibited**
+
+| Mask            | Reason                                   |
+|-----------------|------------------------------------------|
+| `User.?pdate`   | `?` is not supported                     |
+| `~&User.update` | `~` and `&` in one mask is not supported |
+| `[A-Z]*.create` | regex is not supported                   |
+
+**📎 Usage Example**
+
+```php
+$configHolder = new ConfigsHolder(
+    docReader: new HttpReader($apiUrl),
+    projectRootDir: getcwd(),
+    apiVendorAlias: $vendorName,
+    ignoredMethods: [
+        'AdminApi.*',
+        'Command.run',
+        '*.delete',
+        '!Comment.delete',
+        '*.*Test'
+    ]
+);
+```
+
+Masks allow you to easily remove service procedures, test methods, and unwanted CRUD operations from SDK generation.
+
+## Generate SDK
+Run cli command ``` php bin/make.php ```
 ``` bash
-$ php bin/make.php
+$ php bin/make.php http://some.url/api
   > Enter API vendor name: some_vendor
-  > Enter the API url: http://some.url/api
+  > Enter methods to ignore (comma-separated) or empty: *.delete,!Comment.delete
+```
+Or 
+``` bash
+$ php bin/make.php 
 ```
 
 ## Use SDK

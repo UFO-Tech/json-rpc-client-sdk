@@ -22,17 +22,26 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 echo CliColor::YELLOW->value;
 
-$vendorName = 'q';//readline('Enter API vendor name: ');
-//$vendorName = readline('Enter API vendor name: ');
-$apiUrl = '';//readline('Enter the API url: ');
+$vendorName = readline('Enter API vendor name: ');
+$ignore = array_filter(explode(',', readline('Enter methods to ignore (comma separated):')));
+//$ignore =  [
+//    '~*',
+//    'event*',
+//    'Contract.update',
+//    '!~Contract.update',
+//
+//    '&*.create',
+//
+//];
 
 echo CliColor::RESET->value;
 
 try {
-
-//    $docReader = new HttpReader($apiUrl);
-    $docReader = new FileReader(__DIR__.'/schema.json');
-
+    if ($apiUrl = $argv[1] ?? false) {
+        $docReader = new HttpReader($apiUrl);
+    } else {
+        $docReader = new FileReader(__DIR__.'/schema.json');
+    }
 
     $configHolder = new ConfigsHolder(
         $docReader,
@@ -40,8 +49,10 @@ try {
         apiVendorAlias: $vendorName,
         namespace: ConfigsHolder::DEFAULT_NAMESPACE, // 'Ufo\RpcSdk\Client'
         urlInAttr: false,
-        cacheLifeTimeSecond: 1 //ConfigsHolder::DEFAULT_CACHE_LIFETIME,
+        cacheLifeTimeSecond: 1, //ConfigsHolder::DEFAULT_CACHE_LIFETIME,
+        ignoredMethods: $ignore
     );
+
     $generator = new Generator(
         new FileManager(
             new Filesystem(),

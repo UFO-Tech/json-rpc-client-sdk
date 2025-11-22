@@ -38,6 +38,11 @@ class SdkConfigs
         $config = $this->getConfigs()[$vendor] ?? $this->getConfigs(true)[$vendor] ?? throw new ConfigNotFoundException();
         if (is_array($config)) {
             $key = $sync ? static::SYNC : static::ASYNC;
+            /*
+             * fix backward compatibility prev version
+             * todo remove in next major version
+             */
+            if ($key === static::ASYNC) $config[$key] ??= ($config['async'] ?? throw new ConfigNotFoundException());
             $config = $config[$key] ?? throw new ConfigNotFoundException();
         }
         return $config;

@@ -25,7 +25,7 @@ foreach ($methods as $name => $method) {
     ?>
     /**
     * @method '<?= $method->getApiProcedure() . "'" . PHP_EOL; ?>
-    *
+    * <?= ($method->deprecated ? PHP_EOL . '    * @deprecated' : '')  . PHP_EOL; ?>
 <?php
 if ($args) {
     foreach (explode('|', $args) as $arg) {
@@ -42,7 +42,7 @@ if (!$async) {
     * @return <?= $returns . PHP_EOL ?>
     */
     #[ApiMethod('<?=$method->getApiProcedure() ?>')]
-    public function <?= $method->getName() ?>(<?= $argsAttr ?>)<?php require ($async ? 'a':'') . 'sync_method.php.twig'; ?>
+<?= $method->deprecated ? '    #[Deprecated]' . PHP_EOL . '    ' : '    '; ?>public function <?= $method->getName() ?>(<?= $argsAttr ?>)<?php require ($async ? 'a':'') . 'sync_method.php.twig'; ?>
 
 <?php
 }

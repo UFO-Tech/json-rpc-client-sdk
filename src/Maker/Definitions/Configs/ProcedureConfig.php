@@ -25,7 +25,8 @@ readonly class ProcedureConfig
         public string $summary,
         array $params,
         public ResultConfig $result,
-        public array $context = []
+        public array $context = [],
+        public bool $deprecated = false,
     )
     {
         $this->params = array_map(fn(array $param) => ParamConfig::fromArray($this, $param), $params);
@@ -43,6 +44,7 @@ readonly class ProcedureConfig
             $procedure['summary'] ?? '',
             $procedure['params'] ?? [],
             ResultConfig::fromArray($procedure['result'] ?? [], $namespaces),
+            deprecated: $procedure['deprecated'] ?? false,
         );
     }
 

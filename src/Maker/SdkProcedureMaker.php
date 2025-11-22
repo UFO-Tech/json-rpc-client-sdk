@@ -2,6 +2,7 @@
 
 namespace Ufo\RpcSdk\Maker;
 
+use Deprecated;
 use Symfony\Bundle\MakerBundle\Generator;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Ufo\RpcError\RpcDataNotFoundException;
@@ -50,6 +51,8 @@ class SdkProcedureMaker implements IMaker, IClassLikeStackHolder
     protected function prepareData($prepareData = [], bool $async = false): array
     {
         foreach ($this->configsHolder->getRpcProcedures() as $procedureName => $procedureData) {
+            if ($this->configsHolder->methodShouldIgnore($procedureName, $async)) continue;
+
             $classDefinition = $this->classAddOrUpdate($procedureName, $procedureData, $async);
             $prepareData[$classDefinition->getShortName()] = $classDefinition;
         }
@@ -97,6 +100,7 @@ class SdkProcedureMaker implements IMaker, IClassLikeStackHolder
                     AbstractAsyncProcedure::class,
                     ApiMethod::class,
                     AutoconfigureTag::class,
+                    Deprecated::class,
                     'Symfony\Component\Validator\Constraints as Assert',
 
                     ...$classDefinition->getMethodsUses()
@@ -134,7 +138,7 @@ class SdkProcedureMaker implements IMaker, IClassLikeStackHolder
         }
         ClassHelper::removePreviousClass($procedureDefinition->getFQCN());
 
-        $method = new MethodDefinition($convertor->apiMethod, $procedureName);
+        $method = new MethodDefinition($convertor->apiMethod, $procedureName, $procedureData->deprecated);
 
         $method->setReturns($procedureData->result);
 

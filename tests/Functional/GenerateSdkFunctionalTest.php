@@ -47,6 +47,7 @@ use function pathinfo;
 use function scandir;
 use function time;
 use function uniqid;
+use function usleep;
 
 use const DIRECTORY_SEPARATOR;
 
@@ -256,8 +257,8 @@ class GenerateSdkFunctionalTest extends TestCase
                     ]);
                     $this->assertEquals($dataFromSDK, $dataFromSchema, 'SDK data should be equal to schema data for property ' . $dtoName . '::' . $propertyName);
                 }
-
             }
+            usleep(400000);
         }
     }
 

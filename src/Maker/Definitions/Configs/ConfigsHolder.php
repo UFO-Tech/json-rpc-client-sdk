@@ -12,6 +12,7 @@ use Throwable;
 use Ufo\DTO\Helpers\EnumResolver;
 use Ufo\DTO\Helpers\TypeHintResolver;
 use Ufo\RpcObject\RpcTransport;
+use Ufo\RpcSdk\Exceptions\SdkBuilderException;
 use Ufo\RpcSdk\Exceptions\UnsupportedFormatDocumentationException;
 use Ufo\RpcSdk\Maker\Definitions\UfoEnvelope;
 use Ufo\RpcSdk\Maker\DocReader\Interfaces\IDocReader;
@@ -27,7 +28,9 @@ use function current;
 use function in_array;
 use function is_null;
 use function preg_match;
+use function preg_quote;
 use function str_replace;
+use function substr;
 
 class ConfigsHolder
 {
@@ -71,6 +74,7 @@ class ConfigsHolder
         readonly public bool $urlInAttr = true,
         readonly protected int $cacheLifeTimeSecond = self::DEFAULT_CACHE_LIFETIME,
         protected ?CacheInterface $cache = null,
+        readonly public array $ignoredMethods = [],
     )
     {
         $this->apiVendorAlias = Str::asCamelCase($apiVendorAlias);
@@ -214,5 +218,54 @@ class ConfigsHolder
     public function getDefaultValueForParam(string $className, string $paramName): mixed
     {
         return $this->defaultValues[$className][$paramName] ?? null;
+    }
+
+    protected function maskToRegex(string $mask): string
+    {
+        $escaped = preg_quote($mask, '/');
+        $regex = str_replace('\*', '.*', $escaped);
+        return '/^' . $regex . '$/i';
+    }
+
+    protected function parseMask(string $mask): array
+    {
+        $inverted = $asyncOnly = $syncOnly = false;
+
+        $prepare = function (string &$mask, string $symbol, bool &$flag): string {
+            if (str_starts_with($mask, $symbol)) {
+                $mask = substr($mask, 1);
+                $flag = true;
+            }
+            return $mask;
+        };
+
+        $prepare($mask, '!', $inverted);
+        $prepare($mask, '~', $asyncOnly);
+        $prepare($mask, '&', $syncOnly);
+
+        if ($syncOnly && $asyncOnly) throw new SdkBuilderException('Mask for method cannot contain both & and ~ symbols');
+
+        return [$mask, $inverted, $syncOnly, $asyncOnly];
+    }
+
+    public function methodShouldIgnore(string $methodName, bool $async = false): bool
+    {
+        $ignore = false;
+
+        foreach ($this->ignoredMethods as $mask) {
+            [$mask, $inverted, $syncOnly, $asyncOnly] = $this->parseMask($mask);
+
+            if (($syncOnly && $async) || ($asyncOnly && !$async)) continue;
+
+            if (preg_match($this->maskToRegex($mask), $methodName)) {
+                if ($inverted) {
+                    $ignore = false;
+                    break;
+                }
+                $ignore = true;
+            }
+        }
+
+        return $ignore;
     }
 }

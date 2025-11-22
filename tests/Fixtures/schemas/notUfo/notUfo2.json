@@ -12,6 +12,7 @@
     "methods": [
         {
             "name": "get_user_by_name",
+            "deprecated": true,
             "params": [
                 {
                     "name": "username",

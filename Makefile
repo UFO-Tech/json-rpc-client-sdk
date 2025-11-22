@@ -1,7 +1,7 @@
 .PHONY: up up-d up-b up-r down composer composer-install composer-update run cache-clear setup
 
 setup:
-	@test -f MakefileCustom || cp MakefileCustom.dist MakefileCustom
+
 
 -include .env
 
@@ -32,6 +32,10 @@ exec: setup
 	$(DOCKER_EXEC) "echo -e '\033[32m'; /bin/bash"
 
 # Composer Commands
+sdk: setup
+	$(DOCKER_EXEC) "php bin/make.php"
+
+# Composer Commands
 composer: setup
 	$(DOCKER_EXEC) "composer $(CMD)"
 
@@ -44,11 +48,24 @@ composer-update: composer
 composer-i: composer-install
 composer-u: composer-update
 
+commit-a:
+	@printf "\033[33mПідтвердити push з amend? (y/N): \033[0m"; \
+	read CONF && [ "$$CONF" = "y" ] || exit 1; \
+	git add .; \
+	git commit --no-edit --amend; \
+	git push --force; \
+	printf "\033[33mTag (enter щоб пропустити): \033[0m"; \
+	read TAG; \
+	[ -z "$$TAG" ] && exit 0; \
+	git tag -d $$TAG 2>/dev/null || true; \
+	git push origin :refs/tags/$$TAG; \
+	git tag $$TAG; \
+	git push origin $$TAG
+
+
 # Application Specific Commands
 console: make
 	$(DOCKER_EXEC) "php bin/make"
-
-symfony: make
 
 
 -include MakefileCustom
