@@ -9,6 +9,7 @@ use Ufo\RpcSdk\Procedures\ResponseTransformer\Traits\DtoNameExtractorTrait;
 
 use function array_map;
 use function implode;
+use function is_array;
 
 class CollectionResponseHandler implements IResponseHandler
 {
@@ -17,7 +18,9 @@ class CollectionResponseHandler implements IResponseHandler
     public function handle(array $schema, mixed $result, callable $transform, SdkResponseCreator $creator): array
     {
         foreach ($result as $key => $item) {
-            $result[$key] = $transform($schema[T::ITEMS] ?? $schema[T::ADDITIONAL_PROPERTIES] ?? [], $item);
+            $additionalProperties = $schema[T::ADDITIONAL_PROPERTIES] ?? [];
+            if (!is_array($additionalProperties)) $additionalProperties = [];
+            $result[$key] = $transform($schema[T::ITEMS] ?? $additionalProperties, $item);
         }
         return $result;
     }
