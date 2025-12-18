@@ -1,11 +1,11 @@
 {
     "name": "ufo-tech/json-rpc-client-sdk",
     "description": "Simple clientSDK builder for any json-RPC servers",
-    "version": "4.1.0",
+    "version": "4.2.0",
     "license": "MIT",
     "authors": [
         {
-            "name": "Alex Maystrenko",
+            "name": "Alex Maistrenko",
             "email": "ashterix69@gmail.com"
         }
     ],
@@ -18,7 +18,7 @@
         "symfony/cache": "^7.2",
         "symfony/maker-bundle": "^1.48",
         "symfony/http-client": "^7.2",
-        "ufo-tech/rpc-objects": "^3.3",
+        "ufo-tech/rpc-objects": "^3.4",
         "ufo-tech/dto-transformer": "^2",
         "ufo-tech/rpc-exceptions": "^1",
         "ext-readline": "*",

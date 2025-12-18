@@ -4,6 +4,7 @@ namespace Ufo\RpcSdk\Procedures;
 
 use ReflectionClass;
 use ReflectionMethod;
+use Ufo\RpcObject\RpcRequest;
 
 readonly class CallApiDefinition
 {
@@ -11,7 +12,7 @@ readonly class CallApiDefinition
         public ReflectionClass $refClass,
         public ReflectionMethod $refMethod,
         public ApiMethod $method,
-        public array $body
+        public RpcRequest $rpcRequest
     ) {}
 
 }

@@ -7,6 +7,7 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionMethod;
 use Ufo\DTO\DTOTransformer;
+use Ufo\RpcObject\RpcRequest;
 use Ufo\RpcObject\RpcResponse;
 use Ufo\RpcSdk\Procedures\ApiMethod;
 use Ufo\RpcSdk\Procedures\CallApiDefinition;
@@ -439,7 +440,7 @@ class SdkResponseCreatorTest extends TestCase
         $refMethod->method('getDocComment')->willReturn("/** @return $returnType */");
         $refClass = $this->createMock(ReflectionClass::class);
         $refClass->method('getNamespaceName')->willReturn($ns ?? 'Ufo\\RpcSdk\\Tests\\Fixtures');
-        return new CallApiDefinition($refClass, $refMethod, $apiMethod, []);
+        return new CallApiDefinition($refClass, $refMethod, $apiMethod, RpcRequest::fromArray([]));
     }
 
     /**

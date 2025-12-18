@@ -13,10 +13,11 @@ use Throwable;
 use Ufo\RpcError\AbstractRpcErrorException;
 use Ufo\RpcObject\RpcAsyncRequest;
 use Ufo\RpcObject\RpcRequest;
+use Ufo\RpcObject\SpecialRpcParamsEnum;
 use Ufo\RpcObject\Transformer\Transformer;
-use Ufo\RpcSdk\Exceptions\ConfigNotFoundException;
 use Ufo\RpcSdk\Exceptions\SdkException;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
+use Ufo\RpcObject\RPC;
 
 use function count;
 use function end;
@@ -59,17 +60,9 @@ abstract class AbstractAsyncProcedure extends AbstractBaseProcedure implements I
 
         $this->transport ??=
             $this->transportFactory->createTransport($asyncDSN, $this->asyncOptions($asyncDSN), new PhpSerializer());
-        $request = RpcRequest::fromArray($apiMethodDef->body);
-
-        $request = new RpcRequest(
-            $request->getId(),
-            $request->getMethod(),
-            params: json_decode(Transformer::getDefault()->serialize($request->getParams(), 'json'), true),
-            version: $request->getVersion(),
-        );
 
         $env = new Envelope(
-            new RpcAsyncRequest($request, $this->token),
+            new RpcAsyncRequest($apiMethodDef->rpcRequest, $this->token),
             [
                 new AmqpStamp(routingKey: $this->getQueue($asyncDSN), attributes: ['delivery_mode' => 2])
             ]
@@ -78,11 +71,31 @@ abstract class AbstractAsyncProcedure extends AbstractBaseProcedure implements I
         $this->transport->send($env);
 
         try {
-            RequestResponseStack::addRequest($request, ['async' => true]);
+            RequestResponseStack::addRequest($apiMethodDef->rpcRequest, ['async' => true]);
             return true;
         } catch (Throwable $e) {
             throw new SdkException($e->getMessage(), $e->getCode(), $e);
         }
+    }
+
+    #[RPC\IgnoreApi]
+    public function asyncTimeout(int $timeout): static
+    {
+        $this->rpcSpecialParams->setParam(
+            SpecialRpcParamsEnum::TIMEOUT->value,
+            $timeout
+        );
+        return $this;
+    }
+
+    #[RPC\IgnoreApi]
+    public function callbackTo(string $callbackUrl): static
+    {
+        $this->rpcSpecialParams->setParam(
+            SpecialRpcParamsEnum::CALLBACK->value,
+            $callbackUrl
+        );
+        return $this;
     }
 
     protected function getQueue(string $dsn): string

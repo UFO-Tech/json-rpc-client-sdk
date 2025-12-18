@@ -73,10 +73,10 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
             $apiUrl->getUrl(),
             [
                 'headers' => $headers,
-                'json' => $apiMethodDef->body
+                'json' => $apiMethodDef->rpcRequest->toArray()
             ]
         );
-        RequestResponseStack::addRequest(RpcRequest::fromArray($apiMethodDef->body), $headers);
+        RequestResponseStack::addRequest($apiMethodDef->rpcRequest, $headers);
         try {
             $response = SdkResponseCreator::fromApiResponse(
                 $request->getContent(),
@@ -86,6 +86,7 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
             RequestResponseStack::addResponse($response);
             $response->throwError();
 
+            $this->setId();
             return $response;
         } catch (Throwable $e) {
             throw new SdkException($e->getMessage(), $e->getCode(), $e);
