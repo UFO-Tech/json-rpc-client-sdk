@@ -10,6 +10,56 @@ Simple clientSDK builder for any json-RPC servers
 
 # See the [Documentations](https://docs.ufo-tech.space/bin/view/docs/JsonRpcClientSdk/?language=en)
 
+# New in version 4.2
+### ⚙️ Service parameters for UFO-json-rpc servers
+
+Support for **service-level RPC parameters** has been added for servers implemented with **UFO-json-rpc**.
+
+The SDK now allows request configuration via a **fluent chain**, without changing method signatures.
+
+### 🔹 Basic call (as before)
+
+```php
+$userService->list();
+```
+
+### 🔹 Cache control
+
+```php
+$userService
+    ->withoutCache()
+    ->list();
+
+```
+
+### 🔹 Passing service metadata
+
+```php
+$userService
+    ->rayId('someRayId')
+    ->list();
+```
+
+### 🔹 Async-specific parameters
+
+For async procedures, additional execution control options are available:
+
+```php
+$asyncUserService
+    ->withCache()
+    ->rayId('someRayId')
+    ->timeout(30) // timeout in seconds
+    ->callback('https://some.url/hook') // webhook callback
+    ->list();
+```
+
+### 📌 Notes
+
+- Service parameters are **not passed as business method arguments**.
+- They are applied at the **RPC context level** and handled by the server.
+- Works **only with UFO-json-rpc compatible servers**.
+- The SDK remains **type-safe** — method signatures are unchanged.
+
 # New in version 4.1
 ### 🔍 Filtering methods during SDK generation
 

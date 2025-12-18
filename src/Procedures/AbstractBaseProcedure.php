@@ -9,9 +9,11 @@ use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Ufo\RpcError\AbstractRpcErrorException;
 use Ufo\RpcError\ConstraintsImposedException;
 use Ufo\RpcObject\IRpcSpecialParamHandler;
+use Ufo\RpcObject\RpcRequest;
 use Ufo\RpcObject\RpcResponse;
 use Ufo\RpcObject\Rules\Validator\RpcValidator;
 use Ufo\RpcObject\SpecialRpcParamsEnum;
+use Ufo\RpcObject\Transformer\Transformer;
 use Ufo\RpcSdk\Exceptions\SdkException;
 use Ufo\RpcObject\RPC;
 
@@ -34,7 +36,8 @@ abstract class AbstractBaseProcedure
         protected ?IRpcSpecialParamHandler $rpcSpecialParams = null
     )
     {
-        $this->requestId = $requestId ?? uniqid();
+        $this->rpcSpecialParams ??= new RpcSpecialParamHandler();
+        $this->setId($requestId);
     }
 
     /**
@@ -56,32 +59,31 @@ abstract class AbstractBaseProcedure
          * @var ApiMethod $procedure
          */
         $procedure = $refMethod->getAttributes(ApiMethod::class)[0]->newInstance();
-        $body = [
-            'id' => $this->getRequestId(),
-            'jsonrpc' => $this->getRpcVersion(),
-            'method' => $procedure->method,
-        ];
+        $params = [];
         $validator = new RpcValidator(Validation::createValidator());
-        $addOptions = [];
         if (count($args) > 0) {
             foreach ($args as $i => $arg) {
-                $addOptions['params'][$refMethod->getParameters()[$i]->getName()] = $arg;
+                $params[$refMethod->getParameters()[$i]->getName()] = $arg;
             }
         }
         try {
-            $validator->validateMethodParams($this, $function, $addOptions['params'] ?? []);
+            $validator->validateMethodParams($this, $function, $params);
         } catch (ConstraintsImposedException $error) {
             throw AbstractRpcErrorException::fromCode($error->getCode(), json_encode($error->getConstraintsImposed()));
         }
-        $body += $addOptions;
         if ($this->rpcSpecialParams) {
-            $body[SpecialRpcParamsEnum::PREFIX] = $this->rpcSpecialParams->getSpecialParams();
+            $params[SpecialRpcParamsEnum::PREFIX] = $this->rpcSpecialParams->getSpecialParams();
         }
         $definition = new CallApiDefinition(
             $refClass,
             $refMethod,
             $procedure,
-            $body
+            new RpcRequest(
+                id: $this->getRequestId(),
+                method: $procedure->method,
+                params: json_decode(Transformer::getDefault()->serialize($params, 'json'), true),
+                version: $this->getRpcVersion()
+            )
         );
         $this->setConfigs($definition);
         return $definition;
@@ -129,6 +131,50 @@ abstract class AbstractBaseProcedure
     public function getRpcVersion(): string
     {
         return $this->rpcVersion;
+    }
+
+    #[RPC\IgnoreApi]
+    public function withoutCache(): static
+    {
+        $this->rpcSpecialParams->setParam(
+            SpecialRpcParamsEnum::IGNORE_CACHE->value,
+            true
+        );
+        return $this;
+    }
+
+    #[RPC\IgnoreApi]
+    public function withCache(): static
+    {
+        $this->rpcSpecialParams->setParam(
+            SpecialRpcParamsEnum::IGNORE_CACHE->value,
+            false
+        );
+        return $this;
+    }
+
+    #[RPC\IgnoreApi]
+    public function rayId(string|int $rayId): static
+    {
+        $this->rpcSpecialParams->setParam(
+            SpecialRpcParamsEnum::PARENT_REQUEST->value,
+            $rayId
+        );
+        return $this;
+    }
+
+    #[RPC\IgnoreApi]
+    public function resetConfig(): static
+    {
+        $this->rpcSpecialParams->resetParams();
+        return $this;
+    }
+
+    #[RPC\IgnoreApi]
+    public function setId(string|int|null $requestId = null): static
+    {
+        $this->requestId = $requestId ?? uniqid();
+        return $this;
     }
 
     /**
