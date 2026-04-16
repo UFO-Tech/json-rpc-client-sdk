@@ -83,6 +83,7 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
                 $apiMethodDef,
                 $this->handlers
             );
+            $this->rpcSpecialParams?->resetParams();
             RequestResponseStack::addResponse($response);
             $response->throwError();
 
