@@ -1,6 +1,8 @@
 
 ###> symfony/framework-bundle ###
 /.env.local
+/build
+/.phpunit.cache
 /.env.local.php
 /.env.*.local
 /config/secrets/prod/prod.decrypt.private.php
@@ -27,5 +29,3 @@
 /composer.lock
 /bin/test.php
 /MakefileCustom
-/bin/schema.json
-/.phpunit.cache/

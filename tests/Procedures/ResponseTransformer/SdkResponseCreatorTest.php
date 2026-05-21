@@ -23,10 +23,13 @@ use Ufo\RpcSdk\Tests\Fixtures\DTO\TestSmartUserDTO;
 use Ufo\RpcSdk\Tests\Fixtures\DTO\TestUserDTO;
 use Ufo\RpcSdk\Tests\Fixtures\Enums\StringEnum;
 
+use Ufo\RpcSdk\Tests\InitDTOTransformerTrait;
 use function json_encode;
 
 class SdkResponseCreatorTest extends TestCase
 {
+    use InitDTOTransformerTrait;
+
     public function testFromSimpleApiResponseReturnsRpcResponseObject(): void
     {
         $json = $this->createResponseJson(["key" => "value"]);
@@ -206,6 +209,7 @@ class SdkResponseCreatorTest extends TestCase
         $this->assertInstanceOf(TestUserDTO::class, $data[0]);
         $this->assertInstanceOf(TestSmartUserDTO::class, $data[1]);
     }
+
     public function testUnionOfArrayUserOrDummyPositive(): void
     {
         $userJson = $this->createResponseJson([
