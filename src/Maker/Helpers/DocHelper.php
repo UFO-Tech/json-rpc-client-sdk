@@ -41,6 +41,16 @@ class DocHelper
         if ($paramSchema['schema'][TypeHintResolver::REF] ?? false) {
             $paramSchema['schema'] = DocHelper::getComponentData($paramSchema['schema'], $components);
         }
+        if (is_array($paramSchema['schema'][TypeHintResolver::ONE_OFF] ?? null)) {
+            $paramSchema['schema'] = DocHelper::getComponentData($paramSchema['schema'], $components);
+        }
+        if (is_array($paramSchema[TypeHintResolver::ONE_OFF] ?? null)) {
+            foreach ($paramSchema[TypeHintResolver::ONE_OFF] as $i => $subSchema) {
+                if (is_array($subSchema)) {
+                    $paramSchema[TypeHintResolver::ONE_OFF][$i] = DocHelper::getComponentData($subSchema, $components);
+                }
+            }
+        }
         $itemRef = $paramSchema[TypeHintResolver::ITEMS][TypeHintResolver::REF] ?? null;
         if (is_string($itemRef)) {
             $itemPath = str_replace('#/components/', '', $itemRef);
