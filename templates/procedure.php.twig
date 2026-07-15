@@ -20,19 +20,18 @@ foreach ($methods as $name => $method) {
     /**
      * @var MethodDefinition $method
      */
-    $args = $method->getArgumentsSignature();
     $argsAttr = $method->getArgumentsSignature(true);
     ?>
     /**
     * @method '<?= $method->getApiProcedure() . "'" . PHP_EOL; ?>
     * <?= ($method->deprecated ? PHP_EOL . '    * @deprecated' : '')  . PHP_EOL; ?>
 <?php
-if ($args) {
-    foreach (explode('|', $args) as $arg) {
+// Build one @param per argument straight from the argument list. Do NOT split a joined
+// signature string on '|': union types (e.g. null|string) contain '|' and would be torn apart.
+foreach ($method->getArguments() as $argument) {
 ?>
-    * @param <?= trim($arg) . PHP_EOL ?>
+    * @param <?= $argument->getTypeDescription() . ' $' . $argument->getName() . PHP_EOL ?>
 <?php
-    }
 }
 $returns = 'true';
 if (!$async) {
