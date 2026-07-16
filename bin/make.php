@@ -25,7 +25,7 @@ use UfoCms\ColoredCli\CliColor;
 
 require_once match (true) {
     file_exists(__DIR__ . '/../vendor/autoload.php') => __DIR__ . '/../vendor/autoload.php',
-    file_exists(__DIR__ . '/../../autoload.php') => __DIR__ . '/../../autoload.php',
+    file_exists(__DIR__ . '/../../../autoload.php') => __DIR__ . '/../../../autoload.php',
     default => throw new RuntimeException('vendor/autoload.php could not be found. Did you run `composer install`?'),
 };
 
@@ -34,6 +34,9 @@ TransformerBootstrapper::boot();
 echo CliColor::YELLOW->value;
 
 $vendorName = readline('Enter API vendor name: ');
+if (!$vendorName) {
+    $vendorName = 'SDK';
+}
 $ignore = array_filter(explode(',', readline('Enter methods to ignore (comma separated):')));
 //$ignore =  [
 //    '~*',
