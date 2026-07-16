@@ -6,6 +6,7 @@ use Symfony\Bundle\MakerBundle\Util\AutoloaderUtil;
 use Symfony\Bundle\MakerBundle\Util\ComposerAutoloaderFinder;
 use Symfony\Bundle\MakerBundle\Util\MakerFileLinkFormatter;
 use Symfony\Component\Filesystem\Filesystem;
+use Ufo\DTO\TransformerBootstrapper;
 use Ufo\RpcSdk\Maker\Definitions\Configs\ConfigsHolder;
 use Ufo\RpcSdk\Maker\DocReader\FileReader;
 use Ufo\RpcSdk\Maker\DocReader\HttpReader;
@@ -16,9 +17,19 @@ use Ufo\RpcSdk\Maker\SdkConfigMaker;
 use Ufo\RpcSdk\Maker\SdkDtoMaker;
 use Ufo\RpcSdk\Maker\SdkEnumMaker;
 use Ufo\RpcSdk\Maker\SdkProcedureMaker;
+use Ufo\RpcSdk\Procedures\ResponseTransformer\CollectionResponseHandler;
+use Ufo\RpcSdk\Procedures\ResponseTransformer\DtoResponseHandler;
+use Ufo\RpcSdk\Procedures\ResponseTransformer\EnumResponseHandler;
+use Ufo\RpcSdk\Procedures\ResponseTransformer\UnionResponseHandler;
 use UfoCms\ColoredCli\CliColor;
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once match (true) {
+    file_exists(__DIR__ . '/../vendor/autoload.php') => __DIR__ . '/../vendor/autoload.php',
+    file_exists(__DIR__ . '/../../autoload.php') => __DIR__ . '/../../autoload.php',
+    default => throw new RuntimeException('vendor/autoload.php could not be found. Did you run `composer install`?'),
+};
+
+TransformerBootstrapper::boot();
 
 echo CliColor::YELLOW->value;
 

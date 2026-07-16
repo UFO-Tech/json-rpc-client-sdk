@@ -11,9 +11,9 @@ services:
     volumes:
       - ./:${WORKDIR}
       - ./../rpc-objects:${WORKDIR}/../rpc-objects
-    networks:
-      - tm
+#    networks:
+#      - tm
 
-networks:
-  tm:
-    external: true
+#networks:
+#  tm:
+#    external: true
