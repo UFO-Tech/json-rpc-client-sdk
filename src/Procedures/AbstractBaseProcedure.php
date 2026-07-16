@@ -6,6 +6,7 @@ use ReflectionClass;
 use ReflectionException;
 use Symfony\Component\Validator\Validation;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
+use Ufo\DTO\TransformerBootstrapper;
 use Ufo\RpcError\AbstractRpcErrorException;
 use Ufo\RpcError\ConstraintsImposedException;
 use Ufo\RpcObject\IRpcSpecialParamHandler;
@@ -50,6 +51,10 @@ abstract class AbstractBaseProcedure
 
     protected function callApiMethodDef(): CallApiDefinition
     {
+        if (!TransformerBootstrapper::isInitialized()) {
+            TransformerBootstrapper::boot();
+        }
+
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 3)[2];
         $function = $backtrace['function'];
         $args = $backtrace['args'];

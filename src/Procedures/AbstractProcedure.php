@@ -14,9 +14,13 @@ use Ufo\RpcObject\RpcResponse;
 use Ufo\RpcSdk\Exceptions\ConfigNotFoundException;
 use Ufo\RpcSdk\Exceptions\SdkException;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
+use Ufo\RpcSdk\Procedures\ResponseTransformer\CollectionResponseHandler;
+use Ufo\RpcSdk\Procedures\ResponseTransformer\DtoResponseHandler;
+use Ufo\RpcSdk\Procedures\ResponseTransformer\EnumResponseHandler;
 use Ufo\RpcSdk\Procedures\ResponseTransformer\Interfaces\IResponseHandler;
 use Ufo\RpcSdk\Procedures\ResponseTransformer\SdkResponseCreator;
 
+use Ufo\RpcSdk\Procedures\ResponseTransformer\UnionResponseHandler;
 use function end;
 use function explode;
 
@@ -43,6 +47,7 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
     )
     {
         parent::__construct($requestId, $rpcVersion, $rpcSpecialParams);
+        $this->initHandlers();
         $this->httpClient = $httpClient ?? HttpClient::create($httpRequestOptions);
     }
 
@@ -91,6 +96,18 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
             return $response;
         } catch (Throwable $e) {
             throw new SdkException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    protected function initHandlers(): void
+    {
+        if (empty($this->handlers)) {
+            $this->handlers = [
+                new EnumResponseHandler(),
+                new CollectionResponseHandler(),
+                new UnionResponseHandler(),
+                new DtoResponseHandler(),
+            ];
         }
     }
 
