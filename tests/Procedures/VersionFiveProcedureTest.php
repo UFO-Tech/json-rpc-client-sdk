@@ -9,13 +9,13 @@ use Symfony\Component\Messenger\Stamp\DelayStamp;
 use Symfony\Component\Messenger\Transport\TransportInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
+use Ufo\Component\TransportContracts\AsyncStampDTO;
+use Ufo\Component\TransportContracts\AsyncTransportFactory;
+use Ufo\Component\TransportContracts\AsyncTransportResolverInterface;
 use Ufo\RpcObject\RpcAsyncRequest;
 use Ufo\RpcSdk\Procedures\AbstractAsyncProcedure;
 use Ufo\RpcSdk\Procedures\AbstractProcedure;
 use Ufo\RpcSdk\Procedures\ApiMethod;
-use Ufo\RpcSdk\Procedures\AsyncTransportResolvers\AsyncStampDTO;
-use Ufo\RpcSdk\Procedures\AsyncTransportResolvers\AsyncTransportResolverInterface;
-use Ufo\RpcSdk\Procedures\AsyncTransportResolvers\RPCAsyncTransportFactory;
 use Ufo\RpcSdk\Procedures\CallApiDefinition;
 use Ufo\RpcSdk\Procedures\SdkConfigs;
 
@@ -90,7 +90,7 @@ class VersionFiveProcedureTest extends TestCase
         $resolver->expects(self::once())->method('createAsyncStamp')->with(self::callback(
             static fn(AsyncStampDTO $data): bool => $data->asyncDSN === $dsn && $data->highPriority && $data->extra === []
         ))->willReturn($stamp);
-        $procedure = new class(new RPCAsyncTransportFactory([$resolver]), 'token', 'user:password', $name, 'test-id') extends AbstractAsyncProcedure {
+        $procedure = new class(new AsyncTransportFactory([$resolver]), 'token', 'user:password', $name, 'test-id') extends AbstractAsyncProcedure {
             public SdkConfigs $testConfigs;
 
             protected function setConfigs(CallApiDefinition $apiMethodDef): void

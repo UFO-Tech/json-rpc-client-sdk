@@ -14,7 +14,7 @@ Simple clientSDK builder for any json-RPC servers
 
 ### 🔌 Extensible asynchronous transports
 
-- Async procedures now use `RPCAsyncTransportFactory` to select a transport resolver by DSN scheme. Supply resolvers implementing `AsyncTransportResolverInterface`; `AbstractAsyncTransportResolver` provides transport caching and configurable serialization.
+- Async procedures use `Ufo\Component\TransportContracts\AsyncTransportFactory` from `ufo-tech/component-transport-contracts` to select a transport resolver by DSN scheme. Transport contracts, resolvers, and their configuration are maintained in that package.
 - Multiple named async transports are supported. Select one with the `transportName` constructor argument; generated configuration uses a separate `{transportName_secret}` placeholder for each transport.
 - SDK generation detects async transports by the `RpcTransport::ASYNC_PREFIX` prefix.
 
@@ -25,8 +25,9 @@ Simple clientSDK builder for any json-RPC servers
 
 ### 🔄 Breaking changes
 
-- Async procedure constructors now require `RPCAsyncTransportFactory` instead of Symfony's `TransportFactoryInterface`. The new `transportName` argument precedes `requestId`; update positional arguments accordingly.
+- Async procedure constructors now require `Ufo\Component\TransportContracts\AsyncTransportFactory` instead of Symfony's `TransportFactoryInterface`. The new `transportName` argument precedes `requestId`; update positional arguments accordingly.
 - `SdkConfigs::getApiEndpoint()` now requires an explicit transport name instead of an optional boolean. Use `RpcTransport::SYNC_PREFIX` and `RpcTransport::ASYNC_PREFIX` instead of the removed `SdkConfigs::SYNC` and `SdkConfigs::ASYNC` constants.
+- Transport classes have moved from `Ufo\RpcSdk\Procedures\AsyncTransportResolvers` to `Ufo\Component\TransportContracts`; `RPCAsyncTransportFactory` is now `AsyncTransportFactory`. Update custom resolver imports and catch `Ufo\Component\TransportContracts\Exceptions\TransportNotFoundException` instead of the SDK exception.
 - The legacy `async` configuration key is no longer supported. Regenerate your SDK and update transport configuration and secret placeholders when upgrading.
 
 # New in version 4.4
