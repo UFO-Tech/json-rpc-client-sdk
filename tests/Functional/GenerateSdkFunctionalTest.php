@@ -46,7 +46,6 @@ use function is_subclass_of;
 use function method_exists;
 use function pathinfo;
 use function scandir;
-use function time;
 use function uniqid;
 use function usleep;
 
@@ -72,7 +71,7 @@ class GenerateSdkFunctionalTest extends TestCase
 
     protected function setUp(): void
     {
-        $testDir = 'Test_' . time();// . uniqid();
+        $testDir = uniqid('Test_');
         $this->testDir = __DIR__ . '/../../var/sdk/' . $testDir;
         mkdir($this->testDir, 0777, true);
         $this->clientDir = $this->testDir . '/' . static::DEMO_VENDOR_NS . '/' ;
