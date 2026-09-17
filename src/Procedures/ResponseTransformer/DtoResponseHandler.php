@@ -16,6 +16,8 @@ use function is_subclass_of;
 
 class DtoResponseHandler implements IResponseHandler
 {
+    const int PRIORITY = 20;
+
     use DtoNameExtractorTrait;
 
     /**

@@ -18,6 +18,7 @@ use Ufo\DTO\Helpers\EnumResolver;
 use Ufo\DTO\Helpers\TypeHintResolver;
 use Ufo\DTO\Interfaces\IArrayConstructible;
 use Ufo\DTO\Interfaces\IArrayConvertible;
+use Ufo\RpcObject\RpcTransport;
 use Ufo\RpcSdk\Maker\Definitions\Configs\ConfigsHolder;
 use Ufo\RpcSdk\Maker\Definitions\Configs\ProcedureConfig;
 use Ufo\RpcSdk\Maker\Definitions\DtoClassDefinition;
@@ -277,7 +278,29 @@ class GenerateSdkFunctionalTest extends TestCase
     {
         $configPath = $configMaker->sdkConfigs->getConfigDistPath();
         $data = Yaml::parseFile($configPath);
-        $this->assertArrayHasKey(SdkConfigs::ASYNC, $data[static::DEMO_VENDOR_NS]);
+        $this->assertArrayHasKey(RpcTransport::ASYNC_PREFIX, $data[static::DEMO_VENDOR_NS]);
+    }
+
+    protected function namedTransportsTest(SdkConfigMaker $configMaker): void
+    {
+        $configs = $configMaker->sdkConfigs;
+        self::assertSame('amqp://{rpc_async_rabbit_secret}@rabbit:5672/queue/test', $configs->getApiEndpoint(static::DEMO_VENDOR_NS, 'rpc_async_rabbit'));
+        self::assertSame('kafka://{rpc_async_kafka_secret}@kafka:9092/events', $configs->getApiEndpoint(static::DEMO_VENDOR_NS, 'rpc_async_kafka'));
+        self::assertArrayNotHasKey(RpcTransport::ASYNC_PREFIX, $configs->getConfigs(true)[static::DEMO_VENDOR_NS]);
+        $asyncClasses = [];
+        $syncClasses = [];
+        foreach (glob($this->clientDir . '/*.php') as $file) {
+            $class = $this->namespace . '\\' . static::DEMO_VENDOR_NS . '\\' . pathinfo($file, PATHINFO_FILENAME);
+            if (is_subclass_of($class, \Ufo\RpcSdk\Procedures\AbstractAsyncProcedure::class)) {
+                $asyncClasses[] = $class;
+            }
+            if (is_subclass_of($class, \Ufo\RpcSdk\Procedures\AbstractProcedure::class)) {
+                $syncClasses[] = $class;
+            }
+        }
+        self::assertCount(1, $asyncClasses, 'Named async transports must generate an async procedure even without rpc_async.');
+        self::assertCount(1, $syncClasses);
+        self::assertTrue(method_exists($asyncClasses[0], 'test'));
     }
 
     protected function simpleTest(SdkConfigMaker $configMaker): void
@@ -287,7 +310,7 @@ class GenerateSdkFunctionalTest extends TestCase
         $this->assertFileExists($configPath, 'Yaml config file must be generated');
         $data = Yaml::parseFile($configPath);
         $this->assertArrayHasKey(static::DEMO_VENDOR_NS, $data);
-        $this->assertArrayHasKey(SdkConfigs::SYNC, $data[static::DEMO_VENDOR_NS]);
+        $this->assertArrayHasKey(RpcTransport::SYNC_PREFIX, $data[static::DEMO_VENDOR_NS]);
 
         $this->assertDirectoryExists($this->clientDir, 'Client directory must be generated');
     }

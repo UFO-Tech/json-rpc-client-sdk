@@ -15,6 +15,7 @@ use Ufo\RpcSdk\Procedures\SdkConfigs;
 
 use function current;
 use function file_put_contents;
+use function sprintf;
 use function str_replace;
 
 class SdkConfigMaker implements IMaker
@@ -40,17 +41,13 @@ class SdkConfigMaker implements IMaker
         return ($psr4[$this->configsHolder->namespace . '\\'] ?? [])[0] ?? $this->configsHolder->projectRootDir;
     }
 
-    protected function getRpcTransport(array $transportConfig): string
+    protected function getRpcTransport(array $transportConfig, string $transportName): string
     {
-        try {
-            return str_replace(
-                '{user}:{pass}',
-                AsyncTransport::PLACEHOLDER,
-                (string)RpcTransport::fromArray($transportConfig)
-            );
-        } catch (Throwable) {
-            return '';
-        }
+        return str_replace(
+            '{user}:{pass}',
+            AsyncTransport::getSecretPlaceholder($transportName),
+            (string)RpcTransport::fromArray($transportConfig)
+        );
     }
 
     public function make(?callable $callbackOutput = null): void
@@ -58,15 +55,16 @@ class SdkConfigMaker implements IMaker
         $configs = $this->sdkConfigs->getConfigs(true);
         $vendor = $this->configsHolder->apiVendorAlias;
 
-        $server = current($this->configsHolder->rpcResponse['servers']);
-        foreach ($server[EnumResolver::CORE]['transport'] ?? [] as $transportName => $transportConfig) {
-            $configs[$vendor][$transportName] = $this->getRpcTransport($transportConfig);
+        foreach ($this->configsHolder->getTransports() as $transportName => $transportConfig) {
+            try {
+                $configs[$vendor][$transportName] = $this->getRpcTransport($transportConfig, $transportName);
+            } catch (Throwable) {
+                continue;
+            }
         }
 
         if (empty($configs[$vendor])) {
-            $configs[$vendor] = [
-                SdkConfigs::SYNC => $this->configsHolder->apiUrl
-            ];
+            $configs[$vendor][RpcTransport::SYNC_PREFIX] = $this->configsHolder->apiUrl;
         }
 
         file_put_contents($this->sdkConfigs->getConfigDistPath(), Yaml::dump($configs));

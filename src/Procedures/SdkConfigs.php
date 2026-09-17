@@ -4,6 +4,7 @@ namespace Ufo\RpcSdk\Procedures;
 
 use Symfony\Component\Yaml\Yaml;
 use Ufo\RpcError\WrongWayException;
+use Ufo\RpcObject\RpcTransport;
 use Ufo\RpcSdk\Exceptions\ConfigNotFoundException;
 
 use function file_exists;
@@ -13,9 +14,6 @@ class SdkConfigs
 {
     const string CONFIG_NAME = 'sdk_config.yaml';
     const string DIST = '.dist';
-
-    const string SYNC = 'sync';
-    const string ASYNC = 'rpc_async';
 
     public function __construct(
         readonly public string $path,
@@ -33,17 +31,11 @@ class SdkConfigs
         return $configs;
     }
 
-    public function getApiEndpoint(string $vendor, bool $sync = true): string
+    public function getApiEndpoint(string $vendor, string $transportName): string
     {
         $config = $this->getConfigs()[$vendor] ?? $this->getConfigs(true)[$vendor] ?? throw new ConfigNotFoundException();
         if (is_array($config)) {
-            $key = $sync ? static::SYNC : static::ASYNC;
-            /*
-             * fix backward compatibility prev version
-             * todo remove in next major version
-             */
-            if ($key === static::ASYNC) $config[$key] ??= ($config['async'] ?? throw new ConfigNotFoundException());
-            $config = $config[$key] ?? throw new ConfigNotFoundException();
+            $config = $config[$transportName] ?? throw new ConfigNotFoundException();
         }
         return $config;
     }

@@ -1,0 +1,52 @@
+{
+    "openrpc": "1.3.2",
+    "info": {
+        "title": "Named Transports API",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8084/api",
+            "name": "Full Server",
+            "x-ufo": {
+                "transport": {
+                    "sync": {
+                        "scheme": "http",
+                        "host": "localhost",
+                        "port": 8084,
+                        "path": "/api",
+                        "method": "POST"
+                    },
+                    "rpc_async_rabbit": {
+                        "scheme": "amqp",
+                        "user": "{user}",
+                        "pass": "{pass}",
+                        "host": "rabbit",
+                        "port": 5672,
+                        "path": "/queue/test"
+                    },
+                    "rpc_async_kafka": {
+                        "scheme": "kafka",
+                        "user": "{user}",
+                        "pass": "{pass}",
+                        "host": "kafka",
+                        "port": 9092,
+                        "path": "/events"
+                    }
+                }
+            }
+        }
+    ],
+    "methods": [
+        {
+            "name": "test",
+            "params": [],
+            "result": {
+                "name": "pong",
+                "schema": {
+                    "type": "string"
+                }
+            }
+        }
+    ]
+}

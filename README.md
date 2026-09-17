@@ -10,6 +10,58 @@ Simple clientSDK builder for any json-RPC servers
 
 # See the [Documentations](https://docs.ufo-tech.space/bin/view/docs/JsonRpcClientSdk/?language=en)
 
+# New in version 5.0
+
+### 🔌 Extensible asynchronous transports
+
+- Async procedures now use `RPCAsyncTransportFactory` to select a transport resolver by DSN scheme. Supply resolvers implementing `AsyncTransportResolverInterface`; `AbstractAsyncTransportResolver` provides transport caching and configurable serialization.
+- Multiple named async transports are supported. Select one with the `transportName` constructor argument; generated configuration uses a separate `{transportName_secret}` placeholder for each transport.
+- SDK generation detects async transports by the `RpcTransport::ASYNC_PREFIX` prefix.
+
+### ⚙️ Request configuration
+
+- Added fluent `withHeaders()` to merge additional HTTP headers into synchronous procedure requests.
+- Updated `ufo-tech/rpc-objects` to `^3.7`.
+
+### 🔄 Breaking changes
+
+- Async procedure constructors now require `RPCAsyncTransportFactory` instead of Symfony's `TransportFactoryInterface`. The new `transportName` argument precedes `requestId`; update positional arguments accordingly.
+- `SdkConfigs::getApiEndpoint()` now requires an explicit transport name instead of an optional boolean. Use `RpcTransport::SYNC_PREFIX` and `RpcTransport::ASYNC_PREFIX` instead of the removed `SdkConfigs::SYNC` and `SdkConfigs::ASYNC` constants.
+- The legacy `async` configuration key is no longer supported. Regenerate your SDK and update transport configuration and secret placeholders when upgrading.
+
+# New in version 4.4
+
+### ⚙️ Automatic runtime initialization
+
+- The DTO Transformer is initialized automatically before preparing an RPC call if it has not been initialized yet.
+- Synchronous procedures use built-in response handlers for **enums, collections, union types, and DTOs** when the handler list is empty.
+- A non-empty list of custom response handlers is preserved.
+
+# New in version 4.3
+
+### 🔧 SDK generation fixes
+
+- Fixed resolution of `$ref` in array `items` for non-object components, including enums.
+- Added component resolution inside `oneOf`, including nested `schema.oneOf` definitions.
+- Fixed generated `@param` documentation for union types such as `null|string`.
+
+Regenerate your SDK to apply these generation fixes.
+
+### ⚙️ Generator startup
+
+- The CLI generator initializes the DTO Transformer automatically.
+- Composer autoload detection supports both a standalone checkout and installation as a dependency.
+- An empty API vendor name defaults to `SDK`.
+
+### 📦 Dependencies and packaging
+
+- Updated `ufo-tech/dto-transformer` from `^2` to `^3.0.4` and adapted enum conversion to its new API.
+- Updated `ufo-tech/rpc-objects` from `^3.4` to `^3.6`.
+- Excluded tests and development configuration from exported package archives.
+- Removed the Docker configuration's dependency on the external `tm` network.
+
+If your application uses the DTO Transformer API directly, check its compatibility with version 3 when upgrading.
+
 # New in version 4.2
 ### ⚙️ Service parameters for UFO-json-rpc servers
 

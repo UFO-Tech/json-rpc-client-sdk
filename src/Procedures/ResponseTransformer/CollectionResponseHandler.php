@@ -13,6 +13,8 @@ use function is_array;
 
 class CollectionResponseHandler implements IResponseHandler
 {
+    const int PRIORITY = 60;
+
     use DtoNameExtractorTrait;
 
     public function handle(array $schema, mixed $result, callable $transform, SdkResponseCreator $creator): array

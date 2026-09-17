@@ -31,6 +31,8 @@ abstract class AbstractBaseProcedure
     const string DEFAULT_RPC_VERSION = '2.0';
     protected ?SdkConfigs $sdkConfigs = null;
 
+    protected array $meta = [];
+
     public function __construct(
         protected string|int|null $requestId,
         protected string $rpcVersion,
@@ -96,16 +98,12 @@ abstract class AbstractBaseProcedure
 
     protected function setConfigs(CallApiDefinition $apiMethodDef): void
     {
-        if (!$this->sdkConfigs) {
-            $this->sdkConfigs = new SdkConfigs(pathinfo($apiMethodDef->refClass->getFileName())['dirname'] . '/..');
-        }
+        $this->sdkConfigs ??= new SdkConfigs(dirname($apiMethodDef->refClass->getFileName()) . '/..');
 
-        if (
-            empty($this->sdkConfigs->getConfigs())
-            && empty($this->sdkConfigs->getConfigs(true))
-            && $parentClass = $apiMethodDef->refClass->getParentClass()
-        ) {
-            $this->sdkConfigs = new SdkConfigs(pathinfo($parentClass->getFileName())['dirname'] . '/..');
+        if (!empty($this->sdkConfigs->getConfigs()) || !empty($this->sdkConfigs->getConfigs(true))) return;
+
+        if ($parentClass = $apiMethodDef->refClass->getParentClass()) {
+            $this->sdkConfigs = new SdkConfigs(dirname($parentClass->getFileName()) . '/..');
         }
     }
 
@@ -155,6 +153,12 @@ abstract class AbstractBaseProcedure
             SpecialRpcParamsEnum::IGNORE_CACHE->value,
             false
         );
+        return $this;
+    }
+
+    public function withMeta(array $meta): static
+    {
+        $this->meta = $meta;
         return $this;
     }
 

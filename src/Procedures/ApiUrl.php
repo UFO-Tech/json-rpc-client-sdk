@@ -11,9 +11,7 @@ final class ApiUrl
     public function __construct(
         protected string $url,
         protected string $method = 'POST'
-    )
-    {
-    }
+    ) {}
 
     /**
      * @return string
@@ -36,6 +34,6 @@ final class ApiUrl
      */
     public function getApiHost(): string
     {
-        return parse_url($this->url)["host"];
+        return parse_url($this->url)["host"] ?? "";
     }
 }

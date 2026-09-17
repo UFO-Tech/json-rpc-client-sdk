@@ -17,20 +17,20 @@ use Ufo\RpcSdk\Exceptions\UnsupportedFormatDocumentationException;
 use Ufo\RpcSdk\Maker\Definitions\UfoEnvelope;
 use Ufo\RpcSdk\Maker\DocReader\Interfaces\IDocReader;
 use Ufo\RpcSdk\Maker\Helpers\DocHelper;
-use Ufo\RpcSdk\Procedures\AsyncTransport;
-use Ufo\RpcSdk\Procedures\SdkConfigs;
 
 use function array_filter;
 use function array_key_exists;
 use function array_keys;
 use function array_map;
-use function current;
 use function in_array;
 use function is_null;
 use function preg_match;
 use function preg_quote;
 use function str_replace;
+use function str_starts_with;
 use function substr;
+
+use const ARRAY_FILTER_USE_KEY;
 
 class ConfigsHolder
 {
@@ -120,8 +120,8 @@ class ConfigsHolder
                     'schema' => $schema,
                     'required' => in_array($name, $dto['required'] ?? []) || !array_key_exists('default', $schema),
                 ],
-                array_keys($dto['properties'] ?? []),
-                $dto['properties'] ?? []
+                array_keys($dto['properties']),
+                $dto['properties']
             );
             $this->dtos[$dtoName] = DtoConfig::fromArray($dtoName, $properties);
         }
@@ -140,14 +140,18 @@ class ConfigsHolder
         $this->rpcSchema = $allSchema;
     }
 
+    public function getTransports(): array
+    {
+        return ($this->rpcResponse['servers'][0] ?? [])[EnumResolver::CORE]['transport'] ?? [];
+    }
+
     /**
-     * @return void
+     * @return array
      * @throws InvalidArgumentException
-     * @throws CacheException|UnsupportedFormatDocumentationException
+     * @throws UnsupportedFormatDocumentationException
      */
     protected function getApiRpcDoc(): array
     {
-
         $cacheLifetime = $this->cacheLifeTimeSecond;
         $this->rpcResponse = $this->cache->get(
             'rpc.response' . $this->apiVendorAlias,
@@ -194,20 +198,13 @@ class ConfigsHolder
         return $this->dtos;
     }
 
-    public function getRpcTransport(bool $async = false): string
+    public function haveAsyncTransport(): bool
     {
-        $type = $async ? SdkConfigs::ASYNC : SdkConfigs::SYNC;
-        try {
-            return str_replace(
-                '{user}:{pass}',
-                AsyncTransport::PLACEHOLDER,
-                (string)RpcTransport::fromArray(
-                    current($this->rpcResponse['servers'])[EnumResolver::CORE]['transport'][$type] ?? []
-                )
-            );
-        } catch (Throwable) {
-            return '';
-        }
+        return !empty(array_filter(
+            $this->getTransports(),
+            static fn(string $type): bool => str_starts_with($type, RpcTransport::ASYNC_PREFIX),
+            ARRAY_FILTER_USE_KEY,
+        ));
     }
 
     public function addDefaultValueForParam(ParamConfig $paramConfig, mixed $defaultValue): void

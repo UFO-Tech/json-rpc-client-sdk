@@ -9,8 +9,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Throwable;
 use Ufo\RpcError\AbstractRpcErrorException;
 use Ufo\RpcObject\IRpcSpecialParamHandler;
-use Ufo\RpcObject\RpcRequest;
 use Ufo\RpcObject\RpcResponse;
+use Ufo\RpcObject\RpcTransport;
 use Ufo\RpcSdk\Exceptions\ConfigNotFoundException;
 use Ufo\RpcSdk\Exceptions\SdkException;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
@@ -18,6 +18,7 @@ use Ufo\RpcSdk\Procedures\ResponseTransformer\CollectionResponseHandler;
 use Ufo\RpcSdk\Procedures\ResponseTransformer\DtoResponseHandler;
 use Ufo\RpcSdk\Procedures\ResponseTransformer\EnumResponseHandler;
 use Ufo\RpcSdk\Procedures\ResponseTransformer\Interfaces\IResponseHandler;
+use Ufo\RpcSdk\Procedures\ResponseTransformer\ResponseHandlerQueue;
 use Ufo\RpcSdk\Procedures\ResponseTransformer\SdkResponseCreator;
 
 use Ufo\RpcSdk\Procedures\ResponseTransformer\UnionResponseHandler;
@@ -43,7 +44,8 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
         protected ?HttpClientInterface $httpClient = null,
         array $httpRequestOptions = [],
         ?IRpcSpecialParamHandler $rpcSpecialParams = null,
-        protected iterable $handlers = []
+        protected iterable $handlers = [],
+        protected string $transportName = RpcTransport::SYNC_PREFIX
     )
     {
         parent::__construct($requestId, $rpcVersion, $rpcSpecialParams);
@@ -65,7 +67,7 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
             $apiUrl = $attr?->newInstance() ?? throw new ConfigNotFoundException();
         } catch (ConfigNotFoundException) {
             $nsParts = explode('\\', $apiMethodDef->refClass->getNamespaceName());
-            $apiUrl = new ApiUrl($this->sdkConfigs->getApiEndpoint(end($nsParts)));
+            $apiUrl = new ApiUrl($this->sdkConfigs->getApiEndpoint(end($nsParts), $this->transportName));
         }
 
         $headers = [];
@@ -99,6 +101,12 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
         }
     }
 
+    public function withHeaders(array $headers): static
+    {
+        $this->headers = array_merge($this->headers, $headers);
+        return $this;
+    }
+
     protected function initHandlers(): void
     {
         if (empty($this->handlers)) {
@@ -109,6 +117,7 @@ abstract class AbstractProcedure extends AbstractBaseProcedure implements ISdkMe
                 new DtoResponseHandler(),
             ];
         }
+        $this->handlers = ResponseHandlerQueue::sort($this->handlers);
     }
 
 }

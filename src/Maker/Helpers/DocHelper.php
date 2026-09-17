@@ -8,6 +8,7 @@ use Ufo\RpcError\RpcDataNotFoundException;
 
 use function array_shift;
 use function explode;
+use function is_array;
 use function str_replace;
 
 class DocHelper
@@ -38,10 +39,8 @@ class DocHelper
                 $paramSchema = $data;
             }
         }
-        if ($paramSchema['schema'][TypeHintResolver::REF] ?? false) {
-            $paramSchema['schema'] = DocHelper::getComponentData($paramSchema['schema'], $components);
-        }
-        if (is_array($paramSchema['schema'][TypeHintResolver::ONE_OFF] ?? null)) {
+        if (($paramSchema['schema'][TypeHintResolver::REF] ?? false)
+            ||(is_array($paramSchema['schema'][TypeHintResolver::ONE_OFF] ?? null))) {
             $paramSchema['schema'] = DocHelper::getComponentData($paramSchema['schema'], $components);
         }
         if (is_array($paramSchema[TypeHintResolver::ONE_OFF] ?? null)) {

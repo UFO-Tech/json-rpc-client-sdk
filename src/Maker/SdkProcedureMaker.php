@@ -56,7 +56,7 @@ class SdkProcedureMaker implements IMaker, IClassLikeStackHolder
             $classDefinition = $this->classAddOrUpdate($procedureName, $procedureData, $async);
             $prepareData[$classDefinition->getShortName()] = $classDefinition;
         }
-        if (!$async && !empty($this->configsHolder->getRpcTransport(true))) {
+        if (!$async && $this->configsHolder->haveAsyncTransport()) {
             $prepareData = $this->prepareData($prepareData, true);
         }
         return $prepareData;

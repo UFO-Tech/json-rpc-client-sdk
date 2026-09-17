@@ -17,6 +17,8 @@ use function json_encode;
 
 class UnionResponseHandler implements IResponseHandler
 {
+    const int PRIORITY = 80;
+
     use DtoNameExtractorTrait;
 
     public function handle(array $schema, mixed $result, callable $transform, SdkResponseCreator $creator): mixed

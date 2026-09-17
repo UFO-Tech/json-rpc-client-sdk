@@ -3,41 +3,40 @@
 namespace Ufo\RpcSdk\Procedures;
 
 
-use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
-use Symfony\Component\Messenger\Transport\Serialization\PhpSerializer;
-use Symfony\Component\Messenger\Transport\TransportFactoryInterface;
 use Symfony\Component\Messenger\Transport\TransportInterface;
 use Throwable;
 use Ufo\RpcError\AbstractRpcErrorException;
 use Ufo\RpcObject\RpcAsyncRequest;
-use Ufo\RpcObject\RpcRequest;
+use Ufo\RpcObject\RpcTransport;
 use Ufo\RpcObject\SpecialRpcParamsEnum;
-use Ufo\RpcObject\Transformer\Transformer;
 use Ufo\RpcSdk\Exceptions\SdkException;
+use Ufo\RpcSdk\Exceptions\TransportNotFoundException;
 use Ufo\RpcSdk\Interfaces\ISdkMethodClass;
 use Ufo\RpcObject\RPC;
+use Ufo\RpcSdk\Procedures\AsyncTransportResolvers\AsyncStampDTO;
+use Ufo\RpcSdk\Procedures\AsyncTransportResolvers\RPCAsyncTransportFactory;
 
-use function count;
 use function end;
 use function explode;
 use function str_replace;
 
 abstract class AbstractAsyncProcedure extends AbstractBaseProcedure implements ISdkMethodClass
 {
-    protected TransportInterface $transport;
 
     /**
+     * @param RPCAsyncTransportFactory $asyncTransportFactory
      * @param string $token
      * @param string $secretAsync format as {user:pass}
      * @param string|int|null $requestId
      * @param string $rpcVersion
      */
     public function __construct(
-        protected TransportFactoryInterface  $transportFactory,
+        protected RPCAsyncTransportFactory $asyncTransportFactory,
         protected string               $token = '',
         protected string               $secretAsync = '',
+        protected string               $transportName = RpcTransport::ASYNC_PREFIX,
         protected string|int|null      $requestId = null,
         protected string               $rpcVersion = self::DEFAULT_RPC_VERSION
     )
@@ -48,27 +47,26 @@ abstract class AbstractAsyncProcedure extends AbstractBaseProcedure implements I
     /**
      * @return true
      * @throws SdkException
-     * @throws AbstractRpcErrorException|ExceptionInterface
+     * @throws AbstractRpcErrorException|ExceptionInterface|TransportNotFoundException
      */
     protected function requestApi(): true
     {
         $apiMethodDef = $this->callApiMethodDef();
 
         $nsParts = explode('\\', $apiMethodDef->refClass->getNamespaceName());
-        $asyncDSN = $this->sdkConfigs->getApiEndpoint(end($nsParts), false);
-        $asyncDSN = str_replace(AsyncTransport::PLACEHOLDER, $this->secretAsync, $asyncDSN);
+        $asyncDSN = $this->sdkConfigs->getApiEndpoint(end($nsParts), $this->transportName);
+        $asyncDSN = str_replace(AsyncTransport::getSecretPlaceholder($this->transportName), $this->secretAsync, $asyncDSN);
 
-        $this->transport ??=
-            $this->transportFactory->createTransport($asyncDSN, $this->asyncOptions($asyncDSN), new PhpSerializer());
+        $rpcAsyncTransportResolver = $this->asyncTransportFactory->getTransportResolver($asyncDSN);
 
         $env = new Envelope(
-            new RpcAsyncRequest($apiMethodDef->rpcRequest, $this->token),
+            new RpcAsyncRequest($apiMethodDef->rpcRequest, $this->token, $this->meta),
             [
-                new AmqpStamp(routingKey: $this->getQueue($asyncDSN), attributes: ['delivery_mode' => 2])
+                $rpcAsyncTransportResolver->createAsyncStamp(new AsyncStampDTO($asyncDSN))
             ]
         );
 
-        $this->transport->send($env);
+        $rpcAsyncTransportResolver->getTransport($asyncDSN)->send($env);
 
         try {
             RequestResponseStack::addRequest($apiMethodDef->rpcRequest, ['async' => true]);
@@ -98,24 +96,4 @@ abstract class AbstractAsyncProcedure extends AbstractBaseProcedure implements I
         return $this;
     }
 
-    protected function getQueue(string $dsn): string
-    {
-        $parts = explode('/', $dsn);
-        return count($parts) >= 3 ? end($parts) : 'messages';
-    }
-
-    protected function asyncOptions(string $dsn): array
-    {
-        return [
-            'exchange' => [
-                'name' => 'queue_exchange',
-                'type' => 'direct',
-            ],
-            'queues' => [
-                $this->getQueue($dsn) => [
-                    'binding_keys' => [$this->getQueue($dsn)],
-                ],
-            ],
-        ];
-    }
 }

@@ -13,6 +13,8 @@ use UnitEnum;
 
 class EnumResponseHandler implements IResponseHandler
 {
+    const int PRIORITY = 100;
+
     use EnumNameExtractorTrait;
 
     /**
