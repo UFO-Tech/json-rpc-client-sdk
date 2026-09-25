@@ -11,6 +11,8 @@ interface IResponseHandler
 {
     const string TAG = 'ufo.sdk_response_handler';
 
+    const int PRIORITY = 0;
+
     /**
      * @param array $schema
      * @param mixed $result
